@@ -97,20 +97,6 @@ namespace SpineViewer.Models
 
         #endregion
 
-        #region 网络连接选项
-
-        [ObservableProperty]
-        private Uri? _appProxyUri;
-
-        public string? GitHubToken
-        {
-            get => _gitHubToken;
-            set => SetProperty(ref _gitHubToken, value?.Trim());
-        }
-        private string? _gitHubToken;
-
-        #endregion
-
         #region 应用程序选项
 
         public RelayCommand Cmd_SelectAutoRunWorkspaceConfigPath => _cmd_SelectAutoRunWorkspaceConfigPath ??= new(() =>

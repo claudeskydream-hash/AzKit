@@ -7,7 +7,6 @@ using SpineViewer.Models;
 using SpineViewer.Services;
 using SpineViewer.Utils;
 using SpineViewer.ViewModels.Assets;
-using SpineViewer.ViewModels.Assets.GitHub;
 using SpineViewer.ViewModels.Assets.Local;
 using SpineViewer.ViewModels.Main;
 using System.Diagnostics;
@@ -32,12 +31,9 @@ namespace SpineViewer.ViewModels
             _spineObjectListViewModel = new(this);
             _assetsPreviewViewModel = new(this);
             _localAssetsViewModel = new(this);
-            _gitHubAssetsViewModel = new(this);
             _sfmlRendererViewModel = new(this);
             _preferenceViewModel = new(this);
         }
-
-        public bool IsDebug => App.IsDebug;
 
         public string Title => $"{App.AppName} - {App.VersionTag}";
 
@@ -134,9 +130,6 @@ namespace SpineViewer.ViewModels
         /// <summary>
         /// GitHub 在线资源 ViewModel
         /// </summary>
-        public GitHubAssetsViewModel GitHubAssetsViewModel => _gitHubAssetsViewModel;
-        private readonly GitHubAssetsViewModel _gitHubAssetsViewModel;
-
         /// <summary>
         /// SFML 渲染 ViewModel
         /// </summary>
@@ -192,36 +185,10 @@ namespace SpineViewer.ViewModels
         }
 
         /// <summary>
-        /// 打开 Wiki 页面
+        /// 打开使用文档（本仓库 README）
         /// </summary>
         public RelayCommand Cmd_GotoWiki => _cmd_GotoWiki ??= new(() => Process.Start(new ProcessStartInfo($"https://github.com/{App.GithubOwner}/{App.GithubRepo}#readme") { UseShellExecute = true }));
         private RelayCommand? _cmd_GotoWiki;
-
-        /// <summary>
-        /// 打开 FFmpeg 下载页面
-        /// </summary>
-        public RelayCommand Cmd_DownloadFFmpeg => _cmd_DownloadFFmpeg ??= new(() => Process.Start(new ProcessStartInfo("https://ffmpeg.org/download.html") { UseShellExecute = true }));
-        private RelayCommand? _cmd_DownloadFFmpeg;
-
-        /// <summary>
-        /// 显示诊断信息对话框
-        /// </summary>
-        public RelayCommand Cmd_ShowSystemInfoDialog => _cmd_ShowSystemInfoDialog ??= new(() => { DialogService.ShowSystemInfoDialog(); });
-        private RelayCommand? _cmd_ShowSystemInfoDialog;
-
-        public RelayCommand Cmd_OutputWorkerWDebugInfo => _cmd_OutputWorkerWDebugInfo ??= new(() =>
-        {
-            WorkerWDebugger.LogWorkerWWindowTree();
-            WorkerWDebugger.LogWorkerWSearchInfo();
-            WorkerWDebugger.LogWorkerWWindowTree();
-        });
-        private RelayCommand? _cmd_OutputWorkerWDebugInfo;
-
-        public RelayCommand Cmd_OutputGitHubAPIRateLimit => _cmd_OutputGitHubAPIRateLimit ??= new(() =>
-        {
-            GitHubService.GetClient().LogRateLimit();
-        });
-        private RelayCommand? _cmd_OutputGitHubAPIRateLimit;
 
         /// <summary>
         /// 显示关于对话框

@@ -7,15 +7,9 @@
     <s:String x:Key="Str_Download">下载</s:String>
     <s:String x:Key="Str_Help">帮助</s:String>
     <s:String x:Key="Str_Wiki">使用文档</s:String>
-    <s:String x:Key="Str_DownloadFFmpeg">前往下载 FFmpeg</s:String>
-    <s:String x:Key="Str_DiagnosticsTools">诊断工具</s:String>
-    <s:String x:Key="Str_SystemInfo">系统信息</s:String>
-    <s:String x:Key="Str_DebugWorkerW">WorkerW 调试信息</s:String>
-    <s:String x:Key="Str_GitHubAPIRateLimit">GitHub API 速率限制</s:String>
     <s:String x:Key="Str_Abount">关于</s:String>
     <s:String x:Key="Str_Experiment">实验性功能</s:String>
 
-    <s:String x:Key="Str_Open">打开...</s:String>
     <s:String x:Key="Str_OpenWorkspace">打开工作区...</s:String>
     <s:String x:Key="Str_SaveWorkspace">保存工作区...</s:String>
     <s:String x:Key="Str_Preference">首选项</s:String>
@@ -23,12 +17,8 @@
     <s:String x:Key="Str_Exit">退出</s:String>
 
     <!-- 标签页 -->
-    <s:String x:Key="Str_Explorer">浏览</s:String>
     <s:String x:Key="Str_SpineObject">模型</s:String>
-    <s:String x:Key="Str_Canvas">画面</s:String>
     <s:String x:Key="Str_LocalAssets">本地资源</s:String>
-    <s:String x:Key="Str_OnlineAssets">在线资源</s:String>
-    <s:String x:Key="Str_GitHubAssets">GitHub 资源</s:String>
     
     <s:String x:Key="Str_ModelAnimation">模型动画</s:String>
     <s:String x:Key="Str_ModelAnimationTooltip">在左侧模型列表中添加并设置模型动画</s:String>
@@ -38,7 +28,6 @@
     <!-- 模型列表 -->
     <s:String x:Key="Str_Name">名称</s:String>
     <s:String x:Key="Str_Show">显示</s:String>
-    <s:String x:Key="Str_TotalCountStatusBar">共 {0} 项</s:String>
     <s:String x:Key="Str_TotalAndSelectedCountStatusBar">共 {0} 项，已选择 {1} 项</s:String>
     <s:String x:Key="Str_AddSpineObject">添加...</s:String>
     <s:String x:Key="Str_OpenSkelFileTitle">选择骨骼文件（skel）</s:String>
@@ -56,7 +45,6 @@
     <s:String x:Key="Str_SpineObjectConfig">模型参数</s:String>
     <s:String x:Key="Str_CopySpineObjectConfig">复制参数</s:String>
     <s:String x:Key="Str_CopySpineObjectSkinConfig">复制参数（仅皮肤）</s:String>
-    <s:String x:Key="Str_CopySpineObjectSlotAttachmentConfig">复制参数（仅插槽附件）</s:String>
     <s:String x:Key="Str_CopySpineObjectSlotVisibilityConfig">复制参数（仅插槽可见性）</s:String>
     <s:String x:Key="Str_ApplySpineObjectConfig">应用参数</s:String>
     <s:String x:Key="Str_SaveSpineObjectConfigToFile">保存参数文件...</s:String>
@@ -97,7 +85,6 @@
     <s:String x:Key="Str_DisableAll">全部禁用</s:String>
 
     <s:String x:Key="Str_Slot">插槽</s:String>
-    <s:String x:Key="Str_ClearSlotsAttachment">清除附件</s:String>
 
     <s:String x:Key="Str_Animation">动画</s:String>
     <s:String x:Key="Str_AppendTrack">添加</s:String>
@@ -121,16 +108,10 @@
     <s:String x:Key="Str_DebugClippings">Clippings</s:String>
 
     <!-- 渲染画面参数面板 -->
-    <s:String x:Key="Str_RenderStopped">渲染已停止</s:String>
     <s:String x:Key="Str_ResolutionX">宽（像素）</s:String>
     <s:String x:Key="Str_ResolutionY">高（像素）</s:String>
-    <s:String x:Key="Str_CenterX">中心点横坐标</s:String>
-    <s:String x:Key="Str_CenterY">中心点纵坐标</s:String>
-    <s:String x:Key="Str_Zoom">缩放</s:String>
-    <s:String x:Key="Str_Rotation">旋转（角度）</s:String>
     <s:String x:Key="Str_MaxFps">最大帧率</s:String>
     <s:String x:Key="Str_MaxFpsTooltip">预览画面的最大帧率，设置为 0 时则无帧率限制</s:String>
-    <s:String x:Key="Str_PlaySpeed">播放速度</s:String>
     <s:String x:Key="Str_WallpaperView">桌面投影</s:String>
     <s:String x:Key="Str_WallpaperMaxFps">桌面投影最大帧率</s:String>
     <s:String x:Key="Str_WallpaperMaxFpsTooltip">桌面投影的最大帧率，设置为 0 时则无帧率限制</s:String>
@@ -140,10 +121,7 @@
     <s:String x:Key="Str_HitTestLevel">命中检测准确度等级</s:String>
     <s:String x:Key="Str_LogHitSlots">输出命中检测结果的插槽名称</s:String>
     <s:String x:Key="Str_LogHitSlotsTooltip">启用后将会在日志框内输出每一次点击操作命中的模型和插槽情况</s:String>
-    <s:String x:Key="Str_ShowAxis">显示坐标轴</s:String>
     <s:String x:Key="Str_BackgroundColor">背景颜色</s:String>
-    <s:String x:Key="Str_BackgroundImagePath">背景图片路径</s:String>
-    <s:String x:Key="Str_BackgroundImageMode">背景图片模式</s:String>
 
     <!-- 本地资源标签页 -->
     <s:String x:Key="Str_Filter">筛选</s:String>
@@ -154,7 +132,6 @@
     <s:String x:Key="Str_MoveDownAssetsRepo">下移</s:String>
     <s:String x:Key="Str_RefreshRepoItems">刷新列表项</s:String>
     <s:String x:Key="Str_OpenAssetsInExplorer">在资源管理器中打开...</s:String>
-    <s:String x:Key="Str_OpenAssetsInBrowser">在浏览器中打开...</s:String>
     <s:String x:Key="Str_EditAssetsRepo">编辑...</s:String>
     <s:String x:Key="Str_EditLocalAssetsRepoTitle">编辑本地资源库信息</s:String>
     <s:String x:Key="Str_GeneratePreviews">生成预览图...</s:String>
@@ -163,16 +140,8 @@
     <s:String x:Key="Str_ImportSelectedAssets">导入选中项</s:String>
     
     <!-- GitHub 资源标签页 -->
-    <s:String x:Key="Str_Owner">所有者</s:String>
-    <s:String x:Key="Str_Repository">仓库</s:String>
-    <s:String x:Key="Str_CommitSha">SHA</s:String>
     <s:String x:Key="Str_AddGitHubAssetsReposTitle">添加资源库</s:String>
-    <s:String x:Key="Str_AddGitHubAssetsReposHint">每行一个仓库地址，支持指定分支、标签、SHA，缺省则使用默认分支的最新提交</s:String>
-    <s:String x:Key="Str_AddGitHubAssetsReposPlaceholder" xml:space="preserve">例：&#x0A;owner/repository&#x0A;owner/repository@branch&#x0A;owner/repository@tag&#x0A;owner/repository@da39a3ee5e6b4b0d3255bfef95601890afd80709</s:String>
     <s:String x:Key="Str_GetGitHubAssetsReposTitle">获取资源库</s:String>
-    <s:String x:Key="Str_CopyGitHubAssetsRepos">复制到剪贴板</s:String>
-    <s:String x:Key="Str_EditGitHubAssetsRepoTitle">编辑 GitHub 资源库信息</s:String>
-    <s:String x:Key="Str_DownloadGitHubAssets">下载资源</s:String>
     <s:String x:Key="Str_DownloadGitHubAssetsTitle">下载资源</s:String>
     
     <!-- 生成预览图弹窗文本 -->
@@ -286,13 +255,11 @@
     <s:String x:Key="Str_FFmpegCustomArgsTooltip">FFmpeg 自定义参数，与命令行提供方式相同，例如 “-crf 23”</s:String>
 
     <!-- 诊断信息对话框 -->
-    <s:String x:Key="Str_CopyDiagnosticsInfo">复制到剪贴板</s:String>
     <s:String x:Key="Str_Copied">已复制</s:String>
 
     <!-- 关于对话框 -->
     <s:String x:Key="Str_ProgremVersion">程序版本</s:String>
     <s:String x:Key="Str_ProjectUrl">项目地址</s:String>
-    <s:String x:Key="Str_CheckUpdates">检查更新</s:String>
 
     <!-- 首选项对话框 -->
     <s:String x:Key="Str_TextureLoadPreference">纹理加载选项</s:String>
@@ -309,12 +276,6 @@
 
     <s:String x:Key="Str_RendererPreference">预览画面选项</s:String>
 
-    <s:String x:Key="Str_NetworkPreference">网络连接选项</s:String>
-    <s:String x:Key="Str_Proxy">网络代理</s:String>
-    <s:String x:Key="Str_ProxyTooltip">可选指定代理服务器地址，留空则跟随系统代理</s:String>
-    <s:String x:Key="Str_ProxyPlaceholder">例：http://127.0.0.1:10809</s:String>
-    <s:String x:Key="Str_GitHubToken">GitHub 令牌</s:String>
-    <s:String x:Key="Str_GitHubTokenPlaceholder">使用 GitHub 令牌可以有效改善访问速率限制</s:String>
 
     <s:String x:Key="Str_AppPreference">应用程序选项</s:String>
     <s:String x:Key="Str_Language">语言</s:String>

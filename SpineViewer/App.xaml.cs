@@ -27,11 +27,9 @@ namespace SpineViewer
         // [AzureSail] 本程序已改名 AzKit（AzureSail 辅助工具合集），基于 ww-rm/SpineViewer v0.16.34 魔改。
         // 代码命名空间仍沿用 SpineViewer，方便对照上游；对外的名字（窗口标题、exe、单实例、开机自启、文件关联）一律 AzKit。
 #if DEBUG
-        public const bool IsDebug = true;
         public const string AppName = "AzKit_D";
         public const string ProgId = "AzKit_D.skel";
 #else
-        public const bool IsDebug = false;
         public const string AppName = "AzKit";
         public const string ProgId = "AzKit.skel";
 #endif
@@ -40,8 +38,6 @@ namespace SpineViewer
         public const string GithubOwner = "claudeskydream-hash";
         public const string GithubRepo = "AzKit";
 
-        /// <summary>上游项目（原版 SpineViewer）</summary>
-        public const string UpstreamUrl = "https://github.com/ww-rm/SpineViewer";
 
         public const string AutoRunFlag = "--autorun";
         private const string MutexName = $"__{AppName}_Instance__";
@@ -414,10 +410,6 @@ namespace SpineViewer
         }
         private static AppSkin _skin = AppSkin.Light;
 
-        /// <summary>
-        /// 程序网络代理地址, null 则使用系统代理
-        /// </summary>
-        public static Uri? ProxyUri { get; set; }
     }
 
     public enum AppLanguage

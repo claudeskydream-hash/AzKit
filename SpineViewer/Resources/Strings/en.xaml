@@ -7,15 +7,9 @@
     <s:String x:Key="Str_Download">Download</s:String>
     <s:String x:Key="Str_Help">Help</s:String>
     <s:String x:Key="Str_Wiki">Wiki</s:String>
-    <s:String x:Key="Str_DownloadFFmpeg">Go to download FFmpeg</s:String>
-    <s:String x:Key="Str_DiagnosticsTools">Diagnostics Tools</s:String>
-    <s:String x:Key="Str_SystemInfo">System Information</s:String>
-    <s:String x:Key="Str_DebugWorkerW">WorkerW debug information</s:String>
-    <s:String x:Key="Str_GitHubAPIRateLimit">GitHub API Rate Limit</s:String>
     <s:String x:Key="Str_Abount">About</s:String>
     <s:String x:Key="Str_Experiment">Experimental Features</s:String>
 
-    <s:String x:Key="Str_Open">Open...</s:String>
     <s:String x:Key="Str_OpenWorkspace">Open Workspace...</s:String>
     <s:String x:Key="Str_SaveWorkspace">Save Workspace...</s:String>
     <s:String x:Key="Str_Preference">Preferences</s:String>
@@ -23,12 +17,8 @@
     <s:String x:Key="Str_Exit">Exit</s:String>
 
     <!-- 标签页 -->
-    <s:String x:Key="Str_Explorer">Explorer</s:String>
     <s:String x:Key="Str_SpineObject">Model</s:String>
-    <s:String x:Key="Str_Canvas">Canvas</s:String>
     <s:String x:Key="Str_LocalAssets">Local Assets</s:String>
-    <s:String x:Key="Str_OnlineAssets">Online Assets</s:String>
-    <s:String x:Key="Str_GitHubAssets">GitHub Assets</s:String>
 
     <s:String x:Key="Str_ModelAnimation">Model Animation</s:String>
     <s:String x:Key="Str_ModelAnimationTooltip">Add and configure model animations in the model list on the left</s:String>
@@ -38,7 +28,6 @@
     <!-- 模型列表 -->
     <s:String x:Key="Str_Name">Name</s:String>
     <s:String x:Key="Str_Show">Show</s:String>
-    <s:String x:Key="Str_TotalCountStatusBar">{0} items</s:String>
     <s:String x:Key="Str_TotalAndSelectedCountStatusBar">{0} items, {1} selected</s:String>
     <s:String x:Key="Str_AddSpineObject">Add...</s:String>
     <s:String x:Key="Str_OpenSkelFileTitle">Select Skeleton File (skel)</s:String>
@@ -56,7 +45,6 @@
     <s:String x:Key="Str_SpineObjectConfig">Model Config</s:String>
     <s:String x:Key="Str_CopySpineObjectConfig">Copy Config</s:String>
     <s:String x:Key="Str_CopySpineObjectSkinConfig">Copy Parameters (Skin Only)</s:String>
-    <s:String x:Key="Str_CopySpineObjectSlotAttachmentConfig">Copy Parameters (Slot Attachments Only)</s:String>
     <s:String x:Key="Str_CopySpineObjectSlotVisibilityConfig">Copy Parameters (Slot Visibility Only)</s:String>
     <s:String x:Key="Str_ApplySpineObjectConfig">Apply Config</s:String>
     <s:String x:Key="Str_SaveSpineObjectConfigToFile">Save Config to File...</s:String>
@@ -97,7 +85,6 @@
     <s:String x:Key="Str_DisableAll">Disable All</s:String>
 
     <s:String x:Key="Str_Slot">Slot</s:String>
-    <s:String x:Key="Str_ClearSlotsAttachment">Clear Slots Attachment</s:String>
 
     <s:String x:Key="Str_Animation">Animation</s:String>
     <s:String x:Key="Str_AppendTrack">Add</s:String>
@@ -121,16 +108,10 @@
     <s:String x:Key="Str_DebugClippings">Clippings</s:String>
 
     <!-- 渲染画面参数面板 -->
-    <s:String x:Key="Str_RenderStopped">Render Stopped</s:String>
     <s:String x:Key="Str_ResolutionX">Width (px)</s:String>
     <s:String x:Key="Str_ResolutionY">Height (px)</s:String>
-    <s:String x:Key="Str_CenterX">Center X</s:String>
-    <s:String x:Key="Str_CenterY">Center Y</s:String>
-    <s:String x:Key="Str_Zoom">Zoom</s:String>
-    <s:String x:Key="Str_Rotation">Rotation (Degrees)</s:String>
     <s:String x:Key="Str_MaxFps">Max FPS</s:String>
     <s:String x:Key="Str_MaxFpsTooltip">Maximum frame rate of the preview. Set to 0 for no limit.</s:String>
-    <s:String x:Key="Str_PlaySpeed">Playback Speed</s:String>
     <s:String x:Key="Str_WallpaperView">Wallpaper View</s:String>
     <s:String x:Key="Str_WallpaperMaxFps">Max FPS of Wallpaper View</s:String>
     <s:String x:Key="Str_WallpaperMaxFpsTooltip">Maximum frame rate of the wallpaper view. Set to 0 for no limit.</s:String>
@@ -140,10 +121,7 @@
     <s:String x:Key="Str_HitTestLevel">Hit Test Accuracy Level</s:String>
     <s:String x:Key="Str_LogHitSlots">Output Hit Test Slot Names</s:String>
     <s:String x:Key="Str_LogHitSlotsTooltip">When enabled, the log box will output the model and slot information for each click hit test.</s:String>
-    <s:String x:Key="Str_ShowAxis">Show Axis</s:String>
     <s:String x:Key="Str_BackgroundColor">Background Color</s:String>
-    <s:String x:Key="Str_BackgroundImagePath">Background Image Path</s:String>
-    <s:String x:Key="Str_BackgroundImageMode">Background Image Mode</s:String>
 
     <!-- 本地资源标签页 -->
     <s:String x:Key="Str_Filter">Filter</s:String>
@@ -154,7 +132,6 @@
     <s:String x:Key="Str_MoveDownAssetsRepo">Move Down</s:String>
     <s:String x:Key="Str_RefreshRepoItems">Refresh Item List</s:String>
     <s:String x:Key="Str_OpenAssetsInExplorer">Open in File Explorer...</s:String>
-    <s:String x:Key="Str_OpenAssetsInBrowser">Open in Browser...</s:String>
     <s:String x:Key="Str_EditAssetsRepo">Edit...</s:String>
     <s:String x:Key="Str_EditLocalAssetsRepoTitle">Edit Local Assets Repository Information</s:String>
     <s:String x:Key="Str_GeneratePreviews">Generate Previews...</s:String>
@@ -163,16 +140,8 @@
     <s:String x:Key="Str_ImportSelectedAssets">Import Selected Items</s:String>
 
     <!-- GitHub 资源标签页 -->
-    <s:String x:Key="Str_Owner">Owner</s:String>
-    <s:String x:Key="Str_Repository">Repository</s:String>
-    <s:String x:Key="Str_CommitSha">SHA</s:String>
     <s:String x:Key="Str_AddGitHubAssetsReposTitle">Add Assets Repositories</s:String>
-    <s:String x:Key="Str_AddGitHubAssetsReposHint">One repository address per line. You can specify a branch, tag, or SHA; if omitted, the latest commit on the default branch is used.</s:String>
-    <s:String x:Key="Str_AddGitHubAssetsReposPlaceholder" xml:space="preserve">Example:&#x0A;owner/repository&#x0A;owner/repository@branch&#x0A;owner/repository@tag&#x0A;owner/repository@da39a3ee5e6b4b0d3255bfef95601890afd80709</s:String>
     <s:String x:Key="Str_GetGitHubAssetsReposTitle">Get Assets Repositories</s:String>
-    <s:String x:Key="Str_CopyGitHubAssetsRepos">Copy to Clipboard</s:String>
-    <s:String x:Key="Str_EditGitHubAssetsRepoTitle">Edit GitHub Assets Repository Information</s:String>
-    <s:String x:Key="Str_DownloadGitHubAssets">Download Assets</s:String>
     <s:String x:Key="Str_DownloadGitHubAssetsTitle">Download Assets</s:String>
 
     <!-- 生成预览图弹窗文本 -->
@@ -286,13 +255,11 @@
     <s:String x:Key="Str_FFmpegCustomArgsTooltip">FFmpeg custom args, same as command line, e.g. "-crf 23"</s:String>
 
     <!-- 诊断信息对话框 -->
-    <s:String x:Key="Str_CopyDiagnosticsInfo">Copy to Clipboard</s:String>
     <s:String x:Key="Str_Copied">Copied</s:String>
 
     <!-- 关于对话框 -->
     <s:String x:Key="Str_ProgremVersion">Program Version</s:String>
     <s:String x:Key="Str_ProjectUrl">Project URL</s:String>
-    <s:String x:Key="Str_CheckUpdates">Check for Updates</s:String>
 
     <!-- 首选项对话框 -->
     <s:String x:Key="Str_TextureLoadPreference">Texture Loading Options</s:String>
@@ -309,12 +276,6 @@
 
     <s:String x:Key="Str_RendererPreference">Preview Options</s:String>
 
-    <s:String x:Key="Str_NetworkPreference">Network Options</s:String>
-    <s:String x:Key="Str_Proxy">Network Proxy</s:String>
-    <s:String x:Key="Str_ProxyTooltip">Optionally specify a proxy server address. Leave empty to use the system proxy.</s:String>
-    <s:String x:Key="Str_ProxyPlaceholder">Example: http://127.0.0.1:10809</s:String>
-    <s:String x:Key="Str_GitHubToken">GitHub Token</s:String>
-    <s:String x:Key="Str_GitHubTokenPlaceholder">Using a GitHub token can effectively improve rate limits.</s:String>
 
     <s:String x:Key="Str_AppPreference">Application Options</s:String>
     <s:String x:Key="Str_Language">Language</s:String>

@@ -53,19 +53,6 @@
                 </Label>
             </Grid>
 
-            <!-- [AzKit] 上游出处（原「检查更新」已去掉：本仓库不发 release，私有仓库也查不到） -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Label Content="基于"/>
-                <Label Grid.Column="1">
-                    <Hyperlink NavigateUri="{Binding UpstreamUrl}" Command="{Binding Cmd_OpenUrl}" CommandParameter="{Binding UpstreamUrl}">
-                        <Run Text="{Binding UpstreamUrl, Mode=OneWay}"/>
-                    </Hyperlink>
-                </Label>
-            </Grid>
         </StackPanel>
     </Grid>
 </Window>

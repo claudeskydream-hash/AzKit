@@ -1,5 +1,4 @@
 ﻿using NLog;
-using Octokit;
 using SFMLRenderer;
 using Spine;
 using SpineViewer.Extensions;
@@ -191,7 +190,6 @@ public partial class MainWindow : Window
 
         // 加载资源列表
         _vm.LocalAssetsViewModel.LoadAssetsRepos();
-        _vm.GitHubAssetsViewModel.LoadAssetsRepos();
 
         // 还原上一次用户历史状态并开启监听器
         LoadUserState();
@@ -971,15 +969,5 @@ public partial class MainWindow : Window
 
     #endregion
 
-
-    private async void DebugMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-#if DEBUG
-        var c = GitHubService.GetClient();
-        var r = await c.Repository.Get(App.GithubOwner, App.GithubRepo);
-
-
-#endif
-    }
 
 }

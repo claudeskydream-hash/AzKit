@@ -23,6 +23,11 @@
 - **云存档页**（左侧栏 + 右侧「存档」页）：粘贴浏览器 Cookie 解析星火后台 token（可用 Windows DPAPI 加密记住），按账号 / 环境查询存档、按区服汇总，删除全部区服存档或某个区；删前备份到 `data/cloudbackup/`，右侧有状态监测与请求记录。
 - **批量导出 .spine 源文件**、顶部菜单「AZ」（导表、常用 bat）。
 
+## AzKit 精简（相对上游）
+
+- 左侧栏去掉「画面」参数页与「GitHub 资源」页；帮助菜单只留「使用文档」（本仓库 README）与「关于」，关于页去掉检查更新。
+- 随之删除不再使用的代码：GitHub 资源全套（视图模型、对话框、GitHubService / DownloadService、Octokit 依赖）、设置里的「网络连接」（代理、GitHub Token）、系统信息对话框、WorkerW 调试、调试菜单，以及不再引用的界面文字。
+
 ---
 
 # [SpineViewer](https://github.com/ww-rm/SpineViewer)

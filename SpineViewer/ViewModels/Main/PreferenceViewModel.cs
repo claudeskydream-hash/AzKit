@@ -59,9 +59,6 @@ namespace SpineViewer.ViewModels.Main
         public void SavePreference()
         {
             var m = Preference;
-            // 此处要加密 token
-            if (!string.IsNullOrWhiteSpace(m.GitHubToken))
-                m.GitHubToken = Secrets.User.Encrypt(m.GitHubToken);
             JsonHelper.Serialize(m, PreferenceFilePath);
         }
 
@@ -74,20 +71,6 @@ namespace SpineViewer.ViewModels.Main
             {
                 try
                 {
-                    // 此处要解密 token
-                    if (!string.IsNullOrWhiteSpace(m.GitHubToken))
-                    {
-                        try
-                        {
-                            m.GitHubToken = Secrets.User.Decrypt(m.GitHubToken);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Debug(ex.ToString());
-                            _logger.Warn("Failed to decrypt github token, {0}", ex.Message);
-                            m.GitHubToken = null;
-                        }
-                    }
                     Preference = m;
                 }
                 catch (Exception ex)
@@ -133,8 +116,6 @@ namespace SpineViewer.ViewModels.Main
                     LogHitSlots = LogHitSlots,
                     MaxFps = MaxFps,
 
-                    AppProxyUri = AppProxyUri,
-                    GitHubToken = GitHubToken,
 
                     AppLanguage = AppLanguage,
                     AppSkin = AppSkin,
@@ -176,8 +157,6 @@ namespace SpineViewer.ViewModels.Main
                 LogHitSlots = value.LogHitSlots;
                 MaxFps = value.MaxFps;
 
-                AppProxyUri = value.AppProxyUri;
-                GitHubToken = value.GitHubToken;
 
                 AppLanguage = value.AppLanguage;
                 AppSkin = value.AppSkin;
@@ -332,22 +311,6 @@ namespace SpineViewer.ViewModels.Main
         {
             get => _vmMain.SFMLRendererViewModel.MaxFps;
             set => SetProperty(_vmMain.SFMLRendererViewModel.MaxFps, value, v => _vmMain.SFMLRendererViewModel.MaxFps = v);
-        }
-
-        #endregion
-
-        #region 网络连接选项
-
-        public Uri? AppProxyUri 
-        { 
-            get => App.ProxyUri;
-            set => SetProperty(App.ProxyUri, value, v => App.ProxyUri = v);
-        }
-
-        public string? GitHubToken
-        {
-            get => GitHubService.Token;
-            set => SetProperty(GitHubService.Token, value, v => GitHubService.Token = v);
         }
 
         #endregion

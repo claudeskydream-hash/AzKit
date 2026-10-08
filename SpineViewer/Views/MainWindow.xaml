@@ -39,7 +39,6 @@
                        MouseDoubleClick="_notifyIcon_MouseDoubleClick">
             <hc:NotifyIcon.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="{DynamicResource Str_Debug}" Click="DebugMenuItem_Click" Visibility="{Binding IsDebug, Mode=OneWay, Converter={StaticResource Boolean2VisibilityConverter}}"/>
                     <MenuItem Header="{DynamicResource Str_WallpaperView}" Command="{Binding Cmd_SwitchWallpaperView}" IsChecked="{Binding PreferenceViewModel.WallpaperView}"/>
                     <Separator/>
                     <MenuItem Header="{DynamicResource Str_Exit}" Command="{Binding Cmd_ExitFromTray}"/>
@@ -89,7 +88,6 @@
                         <!-- [AzKit] 只留「使用文档」（打开本仓库 README）与「关于」；上游的下载 FFmpeg、诊断工具（系统信息 / WorkerW / GitHub API 速率）已去掉 -->
                         <MenuItem Header="{DynamicResource Str_Wiki}" Command="{Binding Cmd_GotoWiki}"/>
                         <MenuItem Header="{DynamicResource Str_Abount}" Command="{Binding Cmd_ShowAboutDialog}"/>
-                        <MenuItem Header="{DynamicResource Str_Debug}" Click="DebugMenuItem_Click" Visibility="{Binding IsDebug, Mode=OneWay, Converter={StaticResource Boolean2VisibilityConverter}}"/>
                     </MenuItem>
                     <!--<MenuItem Header="{DynamicResource Str_Experiment}"/>-->
                 </Menu>

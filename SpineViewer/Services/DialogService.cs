@@ -2,7 +2,6 @@
 using Microsoft.Win32;
 using SpineViewer.Models;
 using SpineViewer.ViewModels.Assets;
-using SpineViewer.ViewModels.Assets.GitHub;
 using SpineViewer.ViewModels.Exporters;
 using SpineViewer.Views;
 using SpineViewer.Views.AssetsDialogs;
@@ -30,8 +29,6 @@ namespace SpineViewer.Services
             return dialog.ShowDialog() ?? false;
         }
 
-        public static bool ShowSystemInfoDialog() => ShowDialog<SystemInfoDialog>();
-
         public static bool ShowAboutDialog() => ShowDialog<AboutDialog>();
 
         // [AzureSail 新增] 批量导出 Spine 源文件
@@ -46,10 +43,6 @@ namespace SpineViewer.Services
         public static bool ShowGeneratePreviewsDialog(AssetsPreviewViewModel vm) => ShowDialog<GeneratePreviewsDialog>(vm);
 
         public static bool ShowEditLocalAssetsRepoDialog(LocalAssetsRepoModel vm) => ShowDialog<EditLocalAssetsRepoDialog>(vm);
-
-        public static bool ShowEditGitHubAssetsRepoDialog(GitHubAssetsRepoModel vm) => ShowDialog<EditGitHubAssetsRepoDialog>(vm);
-
-        public static bool ShowAddGitHubAssetsReposDialog(GitHubAssetsViewModel vm) => ShowDialog<AddGitHubAssetsReposDialog>(vm);
 
         public static bool ShowFrameExporterDialog(FrameExporterViewModel vm) => ShowDialog<FrameExporterDialog>(vm);
 
