@@ -37,6 +37,12 @@ namespace SpineViewer.ViewModels.Assets
         private string _name = "";
 
         /// <summary>
+        /// [AzureSail 新增] 是不是「全部导出」的源目录（全场只有一个），列表上据此显示标记
+        /// </summary>
+        public bool IsBatchExportSource { get => _isBatchExportSource; set => SetProperty(ref _isBatchExportSource, value); }
+        private bool _isBatchExportSource;
+
+        /// <summary>
         /// 该资源库下的所有模型资源列表
         /// </summary>
         public abstract IReadOnlyList<AssetsItemViewModel> Items { get; }

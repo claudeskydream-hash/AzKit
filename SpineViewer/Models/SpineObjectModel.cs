@@ -219,6 +219,26 @@ namespace SpineViewer.Models
             lock (_lock) return _spineObject.SetSlotVisible(slotName, visible);
         }
 
+        public IReadOnlyList<string> GetSlotAttachmentNames(string slotName)
+        {
+            lock (_lock) return _spineObject.GetSlotAttachmentNames(slotName);
+        }
+
+        public bool TryGetAttachmentOverride(string slotName, out string? attachmentName)
+        {
+            lock (_lock) return _spineObject.TryGetAttachmentOverride(slotName, out attachmentName);
+        }
+
+        public bool SetAttachmentOverride(string slotName, string? attachmentName)
+        {
+            lock (_lock) return _spineObject.SetAttachmentOverride(slotName, attachmentName);
+        }
+
+        public void ClearAttachmentOverride(string slotName)
+        {
+            lock (_lock) _spineObject.ClearAttachmentOverride(slotName);
+        }
+
         public ImmutableArray<string> Animations => _animations;
 
         public float GetAnimationDuration(string name)

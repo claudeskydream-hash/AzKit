@@ -1,0 +1,167 @@
+<Window x:Class="SpineViewer.Views.MonsterTableDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:MonsterTableViewModel}"
+        mc:Ignorable="d"
+        Title="配置到怪物（Hero 表）"
+        Background="{DynamicResource RegionBrush}"
+        Width="760"
+        Height="700"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 选中的 Spine 写进 Excels/Hero.xlsx 的怪物行：有指向它的行就覆盖，没有就新增 -->
+    <DockPanel Margin="10">
+        <Border DockPanel.Dock="Bottom">
+            <WrapPanel HorizontalAlignment="Center">
+                <WrapPanel.Resources>
+                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonDefault}">
+                        <Setter Property="Margin" Value="5"/>
+                        <Setter Property="Width" Value="100"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button Content="写入表格" Click="ButtonOK_Click"/>
+                <Button Content="{DynamicResource Str_Cancel}" Click="ButtonCancel_Click"/>
+            </WrapPanel>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyLabelStyle}">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Right"/>
+                </Style>
+                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource MyTextBoxStyle}"/>
+            </StackPanel.Resources>
+
+            <!-- res 外的 Spine：来源与导入目录名（只在要导入时显示） -->
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding NeedImport}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <Grid Margin="0 2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="来源"/>
+                    <TextBox Grid.Column="1" Text="{Binding SourcePath, Mode=OneWay}" IsReadOnly="True"/>
+                </Grid>
+                <Grid Margin="0 2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="导入到" ToolTip="不在工程 res 里的 Spine，写表前先放进这个目录；目录已存在且不为空时会拒绝"/>
+                    <TextBlock Grid.Column="1" Margin="5 0" VerticalAlignment="Center" Text="{Binding ImportParentText}"/>
+                    <TextBox Grid.Column="2" Text="{Binding ImportName, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+            </StackPanel>
+
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="spineRes"/>
+                <TextBox Grid.Column="1" Text="{Binding SpineRes, Mode=OneWay}" IsReadOnly="True"/>
+            </Grid>
+
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="heroName"/>
+                <TextBox Grid.Column="1" Text="{Binding MonsterName, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="unitType"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:MonsterTableViewModel.UnitTypes}}"
+                          SelectedItem="{Binding UnitType}"/>
+            </Grid>
+
+            <!-- 怪物动画名固定为标准名（不让选），这里只列出 skel 里有没有 -->
+            <TextBlock Margin="5 8 0 2" Opacity="0.7" TextWrapping="Wrap"
+                       Text="怪物动画名统一为 idle / run / attack / spell / hit / die，写表时固定写这几个名字。事件帧（attack 的 attack、spell 的 Spell）这里查不了，要美术自己确认。"/>
+            <ItemsControl Margin="5 0 0 4" ItemsSource="{Binding AnimChecks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0 1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Anim}" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Status}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Found}" Value="False">
+                                                <Setter Property="Foreground" Value="OrangeRed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Found}" Value="True">
+                                                <Setter Property="Foreground" Value="LimeGreen"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Grid.Column="2" Text="{Binding Usage}" Opacity="0.7" TextWrapping="Wrap"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Margin="5 6" TextWrapping="Wrap" Foreground="OrangeRed"
+                       Text="{Binding VersionWarning}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding VersionWarning}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- 写法：新增一行 / 覆盖列表里选中的行 -->
+            <StackPanel Orientation="Horizontal" Margin="5 8 0 4">
+                <RadioButton Content="{Binding NewRowText}" IsChecked="{Binding IsNewRow}" GroupName="Mode" Margin="0 0 20 0"/>
+                <RadioButton Content="覆盖下面选中的行" GroupName="Mode" IsChecked="{Binding IsOverwrite}"/>
+            </StackPanel>
+
+            <!-- 写表时会做什么 -->
+            <TextBlock Margin="5 6" TextWrapping="Wrap" FontWeight="Bold" Text="{Binding PlanText}"/>
+            <TextBlock Margin="5 0 0 6" Opacity="0.7" Text="表里现有的怪物行（id ≥ 100000），点选一行即覆盖它："/>
+        </StackPanel>
+
+        <!-- 现有的怪物行：选中即切到覆盖模式 -->
+        <ListView ItemsSource="{Binding MonsterRows}" SelectedItem="{Binding SelectedRow}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="id" Width="70" DisplayMemberBinding="{Binding Id}"/>
+                    <GridViewColumn Header="heroName" Width="130" DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn Header="类型" Width="70" DisplayMemberBinding="{Binding Type}"/>
+                    <GridViewColumn Header="spineRes" Width="420" DisplayMemberBinding="{Binding Resource}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</Window>

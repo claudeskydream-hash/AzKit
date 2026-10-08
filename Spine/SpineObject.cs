@@ -185,6 +185,8 @@ namespace Spine
 
                 // 拷贝皮肤加载情况
                 _skinLoadStatus = other._skinLoadStatus.ToDictionary();
+                foreach (var (slotName, attachmentName) in other._attachmentOverrides)
+                    _attachmentOverrides[slotName] = attachmentName;
                 ReloadSkins();
 
                 // XXX(#105): 已去除插槽附件拷贝
@@ -347,6 +349,69 @@ namespace Spine
         }
 
         /// <summary>
+        /// 换装: 被改过的插槽附件, 插槽名 → 附件名 (<c>null</c> = 清空).
+        /// 动画的附件关键帧和 SetSlotsToSetupPose 都会把附件改回去, 所以每帧在动画之后补设一遍.
+        /// </summary>
+        protected readonly Dictionary<string, string?> _attachmentOverrides = [];
+
+        /// <summary>
+        /// 列出插槽在当前已加载皮肤 (含 default) 里的全部附件名, 插槽不存在返回空
+        /// </summary>
+        public IReadOnlyList<string> GetSlotAttachmentNames(string slotName)
+        {
+            if (_skeleton.SlotsByName.TryGetValue(slotName, out var slot))
+                return _skeleton.GetSlotAttachmentNames(slot.Index);
+            return [];
+        }
+
+        /// <summary>
+        /// 查询换装覆盖, 没有覆盖返回 false
+        /// </summary>
+        public bool TryGetAttachmentOverride(string slotName, out string? attachmentName)
+            => _attachmentOverrides.TryGetValue(slotName, out attachmentName);
+
+        /// <summary>
+        /// 换装: 把插槽固定显示为指定附件, <c>null</c> 表示清空插槽
+        /// </summary>
+        /// <returns>插槽或附件不存在返回 false</returns>
+        public bool SetAttachmentOverride(string slotName, string? attachmentName)
+        {
+            if (!_skeleton.SetAttachment(slotName, attachmentName)) return false;
+            _attachmentOverrides[slotName] = attachmentName;
+            return true;
+        }
+
+        /// <summary>
+        /// 换装: 取消插槽的覆盖, 恢复到 setup 姿态的附件 (之后由动画接管)
+        /// </summary>
+        public void ClearAttachmentOverride(string slotName)
+        {
+            if (!_attachmentOverrides.Remove(slotName)) return;
+            if (_skeleton.SlotsByName.ContainsKey(slotName))
+            {
+                // 只能整体重置插槽, 再把其它覆盖补回去
+                _skeleton.SetSlotsToSetupPose();
+                ApplyAttachmentOverrides();
+            }
+        }
+
+        /// <summary>
+        /// 把换装覆盖全部重设一遍; 附件已不存在 (如卸载了皮肤) 的项会被丢弃
+        /// </summary>
+        protected void ApplyAttachmentOverrides()
+        {
+            if (_attachmentOverrides.Count <= 0) return;
+            List<string>? invalid = null;
+            foreach (var (slotName, attachmentName) in _attachmentOverrides)
+            {
+                if (!_skeleton.SetAttachment(slotName, attachmentName))
+                    (invalid ??= []).Add(slotName);
+            }
+            if (invalid is not null)
+                foreach (var slotName in invalid) _attachmentOverrides.Remove(slotName);
+        }
+
+        /// <summary>
         /// 查询皮肤加载状态, 皮肤不存在时返回 false
         /// </summary>
         public bool GetSkinStatus(string name) => name == "default" || _skinLoadStatus.TryGetValue(name, out var status) && status;
@@ -373,6 +438,7 @@ namespace Spine
             foreach (var (name, _) in _skinLoadStatus.Where(e => e.Value)) 
                 skin.AddSkin(_data.SkinsByName[name]);
             _skeleton.SetSlotsToSetupPose();
+            ApplyAttachmentOverrides();
             _skeleton.UpdateCache();
         }
 
@@ -383,6 +449,7 @@ namespace Spine
         {
             _animationState.Update(delta);
             _animationState.Apply(_skeleton);
+            ApplyAttachmentOverrides();
             _skeleton.Update(delta);
             _skeleton.UpdateWorldTransform(Physics);
         }

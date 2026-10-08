@@ -345,6 +345,10 @@ namespace SpineViewer.ViewModels.Assets
 
             var item = (TItem)args[0]!;
             _vmMain.AssetsPreviewViewModel.PreviewImage = item.PreviewImage;
+
+            // [AzureSail 新增] 单击即在右侧「模型动画」里实时播放, 不必先导入或生成预览图
+            if (File.Exists(item.LocalFullPath) && _vmMain.SpineObjectListViewModel.ShowPreviewObject(item.LocalFullPath))
+                _vmMain.ViewTabIndex = 0;
         });
         private RelayCommand<IList?>? _cmd_AssetsItemSelectionChanged;
 
@@ -358,6 +362,17 @@ namespace SpineViewer.ViewModels.Assets
         );
         private RelayCommand<IList?>? _cmd_RefreshRepoItems;
 
+        /// <summary>
+        /// [AzureSail 新增] 重新扫描某个资源库（全部导出生成了新的预览 skel 之后用）：正在显示的就连列表一起刷新
+        /// </summary>
+        protected void RefreshRepo(TRepo repo)
+        {
+            if (ReferenceEquals(repo, _selectedAssetsRepo))
+                _ = UpdateShownItemsAsync(true);
+            else
+                _ = repo.RefreshItemsAsync();
+        }
+
         public override RelayCommand<IList?> Cmd_ImportSelectedAssets => _cmd_ImportSelectedAssets ??= new(ImportSelectedAssets_Execute, CommandCanExecute.AtLeastOne);
         private RelayCommand<IList?>? _cmd_ImportSelectedAssets;
 
@@ -369,6 +384,121 @@ namespace SpineViewer.ViewModels.Assets
             var items = GetItems(args);
 
             _vmMain.SpineObjectListViewModel.AddSpineObjectFromFileList(items.Select(m => m.LocalFullPath));
+        }
+
+        /// <summary>
+        /// [AzureSail 新增] 用 Spine 编辑器把选中项所在目录里的 .spine 工程重新导出
+        /// （版本、Spine 程序、输出目录沿用「文件 → 批量导出 Spine 源文件」里的设置）
+        /// </summary>
+        public RelayCommand<IList?> Cmd_ExportSpineSource => _cmd_ExportSpineSource ??= new(ExportSpineSource_Execute, CommandCanExecute.AtLeastOne);
+        private RelayCommand<IList?>? _cmd_ExportSpineSource;
+
+        private void ExportSpineSource_Execute(IList? args)
+        {
+            if (!CommandCanExecute.AtLeastOne(args))
+                return;
+
+            var items = GetItems(args);
+            var spineFiles = items
+                .Select(m => m.LocalDirectory)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(Directory.Exists)
+                .SelectMany(dir => Directory.GetFiles(dir, "*.spine"))
+                .ToList();
+            if (spineFiles.Count <= 0)
+            {
+                MessagePopupService.Warn("选中项所在的目录里没有 .spine 源文件，无法重新导出");
+                return;
+            }
+
+            var vm = _vmMain.SpineSourceExportViewModel;
+            if (string.IsNullOrWhiteSpace(vm.OutputDirectory))
+            {
+                MessagePopupService.Info("第一次使用，请选择导出目录（放在游戏 res 目录以外）");
+                if (!DialogService.ShowOpenFolderDialog(out var folder))
+                    return;
+                vm.OutputDirectory = folder!;
+            }
+            var error = vm.ValidateForSelected();
+            if (error is not null)
+            {
+                MessagePopupService.Error(error + "\n可在「文件 → 批量导出 Spine 源文件...」里修改");
+                return;
+            }
+
+            vm.ExportProjects(spineFiles, items[0].RepoDirectory);
+        }
+
+        /// <summary>
+        /// [AzureSail 新增] 把选中的 Spine 特效配置进 AzureSail 的特效表（覆盖一行或新增一行）
+        /// </summary>
+        public RelayCommand<IList?> Cmd_ConfigEffectTable => _cmd_ConfigEffectTable ??= new(ConfigEffectTable_Execute, CommandCanExecute.OnlyOne);
+        private RelayCommand<IList?>? _cmd_ConfigEffectTable;
+
+        private void ConfigEffectTable_Execute(IList? args)
+        {
+            if (!CommandCanExecute.OnlyOne(args))
+                return;
+
+            var item = GetItems(args)[0];
+            var vm = SpineViewer.ViewModels.EffectTableViewModel.Create(item.LocalFullPath,
+                _vmMain.HeroExportViewModel.ProjectRoot, _vmMain.SpineSourceExportViewModel, out var error);
+            if (vm is null)
+            {
+                MessagePopupService.Warn(error ?? "无法配置到特效表");
+                return;
+            }
+            DialogService.ShowEffectTableDialog(vm);
+        }
+
+        /// <summary>
+        /// [AzureSail 新增] 设置导出：资源库「全部导出」时，标了的才往导出文件夹生成一份（标记记在 .spine 工程上）
+        /// </summary>
+        public RelayCommand<IList?> Cmd_MarkExport => _cmd_MarkExport ??= new(args => SetExportMark(args, true), CommandCanExecute.AtLeastOne);
+        private RelayCommand<IList?>? _cmd_MarkExport;
+
+        /// <summary>[AzureSail 新增] 取消导出</summary>
+        public RelayCommand<IList?> Cmd_UnmarkExport => _cmd_UnmarkExport ??= new(args => SetExportMark(args, false), CommandCanExecute.AtLeastOne);
+        private RelayCommand<IList?>? _cmd_UnmarkExport;
+
+        private void SetExportMark(IList? args, bool marked)
+        {
+            if (!CommandCanExecute.AtLeastOne(args)) return;
+
+            var items = GetItems(args);
+            var (changed, noProject) = Utils.ExportMarks.SetItems(items.Select(it => it.LocalFullPath), marked);
+            // 同一个工程可能对应列表里的多项（比如同目录的几个 skel），整列刷一遍最省事
+            foreach (var it in ShownItems) it.NotifyExportMarkChanged();
+            OnExportMarksChanged();
+
+            if (noProject > 0)
+                MessagePopupService.Warn($"{noProject} 项旁边没有 .spine 工程，没法{(marked ? "设置" : "取消")}导出（全部导出只认 .spine）");
+            _logger.Info("{0}导出 {1} 项", marked ? "设置" : "取消", changed);
+        }
+
+        /// <summary>[AzureSail 新增] 导出标记变了（子类据此刷新「全部导出」的说明）</summary>
+        protected virtual void OnExportMarksChanged() { }
+
+        /// <summary>
+        /// [AzureSail 新增] 把选中的 Spine 配置成英雄表里的怪物（有指向它的怪物行就覆盖，没有就新增）
+        /// </summary>
+        public RelayCommand<IList?> Cmd_ConfigMonsterTable => _cmd_ConfigMonsterTable ??= new(ConfigMonsterTable_Execute, CommandCanExecute.OnlyOne);
+        private RelayCommand<IList?>? _cmd_ConfigMonsterTable;
+
+        private void ConfigMonsterTable_Execute(IList? args)
+        {
+            if (!CommandCanExecute.OnlyOne(args))
+                return;
+
+            var item = GetItems(args)[0];
+            var vm = SpineViewer.ViewModels.MonsterTableViewModel.Create(item.LocalFullPath,
+                _vmMain.HeroExportViewModel.ProjectRoot, _vmMain.SpineSourceExportViewModel, out var error);
+            if (vm is null)
+            {
+                MessagePopupService.Warn(error ?? "无法配置到怪物");
+                return;
+            }
+            DialogService.ShowMonsterTableDialog(vm);
         }
 
         /// <summary>
@@ -404,7 +534,8 @@ namespace SpineViewer.ViewModels.Assets
                 }
                 else
                 {
-                    shownItems.AddRange(repo.Items.Where(it => it.FileName.Contains(filter, StringComparison.OrdinalIgnoreCase)));
+                    // [AzureSail 修改] 按相对路径筛选, 输入目录名(如 Effect)也能筛出整个目录
+                    shownItems.AddRange(repo.Items.Where(it => it.RelativePath.Contains(filter, StringComparison.OrdinalIgnoreCase)));
                 }
             }
 

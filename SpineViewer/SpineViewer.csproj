@@ -12,6 +12,9 @@
         <OutputPath>$(BaseOutputPath)\$(Configuration)\$(PlatformTarget)</OutputPath>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <Version>0.16.34</Version>
+        <!-- [AzureSail] 程序改名 AzKit（命名空间仍为 SpineViewer） -->
+        <AssemblyName>AzKit</AssemblyName>
+        <Product>AzKit</Product>
         <OutputType>WinExe</OutputType>
         <UseWPF>true</UseWPF>
     </PropertyGroup>

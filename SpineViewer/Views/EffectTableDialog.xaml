@@ -1,0 +1,136 @@
+﻿<Window x:Class="SpineViewer.Views.EffectTableDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:EffectTableViewModel}"
+        mc:Ignorable="d"
+        Title="配置到特效表（EffectData）"
+        Background="{DynamicResource RegionBrush}"
+        Width="760"
+        Height="560"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 选中的 Spine 特效写进 Excels/EffectData.xlsx：覆盖一行或新增一行 -->
+    <DockPanel Margin="10">
+        <Border DockPanel.Dock="Bottom">
+            <WrapPanel HorizontalAlignment="Center">
+                <WrapPanel.Resources>
+                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonDefault}">
+                        <Setter Property="Margin" Value="5"/>
+                        <Setter Property="Width" Value="100"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button Content="写入表格" Click="ButtonOK_Click"/>
+                <Button Content="{DynamicResource Str_Cancel}" Click="ButtonCancel_Click"/>
+            </WrapPanel>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyLabelStyle}">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Right"/>
+                </Style>
+                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource MyTextBoxStyle}"/>
+            </StackPanel.Resources>
+
+            <!-- res 外的特效：来源与导入目录名（只在要导入时显示） -->
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding NeedImport}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <Grid Margin="0 2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="来源"/>
+                    <TextBox Grid.Column="1" Text="{Binding SourcePath, Mode=OneWay}" IsReadOnly="True"/>
+                </Grid>
+                <Grid Margin="0 2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="导入到" ToolTip="不在工程 res 里的特效，写表前先放进 res/spine/Effect/&lt;目录名&gt;/；目录已存在且不为空时会拒绝"/>
+                    <TextBlock Grid.Column="1" Margin="5 0" VerticalAlignment="Center" Text="res/spine/Effect/"/>
+                    <TextBox Grid.Column="2" Text="{Binding ImportName, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- 地址（只读） -->
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="spineRes"/>
+                <TextBox Grid.Column="1" Text="{Binding SpineRes, Mode=OneWay}" IsReadOnly="True"/>
+            </Grid>
+
+            <!-- 名字 -->
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="effectName" ToolTip="只在新增行时写入；覆盖已有行时保留原名字"/>
+                <TextBox Grid.Column="1" Text="{Binding EffectName, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsNewRow}"/>
+            </Grid>
+
+            <!-- 动画 -->
+            <Grid Margin="0 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="spineAnim"/>
+                <ComboBox Grid.Column="1" IsEditable="True"
+                          ItemsSource="{Binding Animations}"
+                          Text="{Binding SelectedAnimation, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+
+            <TextBlock Margin="5 6" TextWrapping="Wrap" Foreground="OrangeRed"
+                       Text="{Binding VersionWarning}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding VersionWarning}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- 写法 -->
+            <StackPanel Orientation="Horizontal" Margin="5 8 0 4">
+                <RadioButton Content="{Binding NewRowText}" IsChecked="{Binding IsNewRow}" GroupName="Mode" Margin="0 0 20 0"/>
+                <RadioButton Content="覆盖下面选中的行" GroupName="Mode" IsChecked="{Binding IsOverwrite}"/>
+            </StackPanel>
+            <TextBlock Margin="5 0 0 6" Opacity="0.7" TextWrapping="Wrap"
+                       Text="新增：场景、起点、时长、缩放照抄表里最后一个 Spine 特效行。覆盖：只改 spineRes / spineAnim，并清空 sceEffect；名字 effectName 与其余列都不动。"/>
+        </StackPanel>
+
+        <!-- 现有的行 -->
+        <ListView ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="id" Width="60" DisplayMemberBinding="{Binding Id}"/>
+                    <GridViewColumn Header="effectName" Width="130" DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn Header="spineRes / sceEffect" Width="380" DisplayMemberBinding="{Binding Resource}"/>
+                    <GridViewColumn Header="spineAnim" Width="100" DisplayMemberBinding="{Binding Anim}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</Window>

@@ -34,10 +34,11 @@ namespace SpineViewer.Services
         /// <summary>
         /// 运行 Func 任务并显示进度对话框, 不会阻塞 UI, 但是会阻塞返回
         /// </summary>
-        public static TResult? RunAsync<TResult>(Func<IProgressReporter, CancellationToken, TResult?> work, string title)
+        public static TResult? RunAsync<TResult>(Func<IProgressReporter, CancellationToken, TResult?> work, string title, Window? owner = null)
         {
             var vm = new ProgressDialogViewModelFunc<TResult>(work) { Title = title };
-            var progressWindow = new ProgressDialog() { DataContext = vm, Owner = App.Current.MainWindow };
+            // [AzureSail 修改] 可指定 owner：从别的模态对话框里调时压在那个对话框上面，而不是被它挡住
+            var progressWindow = new ProgressDialog() { DataContext = vm, Owner = owner ?? App.Current.MainWindow };
             progressWindow.ShowDialog();
             return vm.Result;
         }

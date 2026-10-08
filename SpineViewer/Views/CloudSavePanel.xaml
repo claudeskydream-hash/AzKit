@@ -1,0 +1,80 @@
+<UserControl x:Class="SpineViewer.Views.CloudSavePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+             d:DataContext="{d:DesignInstance Type=vm:CloudSaveViewModel}"
+             mc:Ignorable="d">
+    <!-- [AzureSail 新增] 左侧栏「云存档」页：查询、删除 AzureSail 玩家的星火云存档。
+         删档 = 把值置空，游戏按新档重建；删前备份到 data/cloudbackup。原先在游戏 GM 面板里，星火沙箱不让游戏发 HTTP 才挪到这里。
+         结果与选中区的各段存档在右侧「存档」页（CloudSaveDetailPanel），一有操作右侧自动切过去 -->
+    <DockPanel Margin="4">
+        <!-- ① 后台凭证 -->
+        <StackPanel DockPanel.Dock="Top" Margin="0 0 0 6">
+            <TextBlock Text="① 后台登录凭证（粘贴浏览器里整段 Cookie，含 token=… 即可）" FontWeight="Bold" Margin="0 0 0 2"/>
+            <TextBox Text="{Binding CookieText, UpdateSourceTrigger=PropertyChanged}" Height="64"
+                     TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                     VerticalContentAlignment="Top" FontFamily="Consolas"
+                     ToolTip="只取其中 token= 那一段，其余不发给后台；解析成功后输入框会清空，不把 token 留在屏幕上"/>
+            <DockPanel Margin="0 4 0 0">
+                <Button DockPanel.Dock="Left" Content="解析" Width="64" Command="{Binding Cmd_ParseToken}"/>
+                <Button DockPanel.Dock="Right" Content="清除" Command="{Binding Cmd_ForgetToken}"
+                        ToolTip="删掉本机加密保存的 token（换账号、或这台电脑不再用时）"/>
+                <CheckBox Content="记住凭证" IsChecked="{Binding RememberToken}" Margin="8 0 0 0" VerticalAlignment="Center"
+                          ToolTip="解析成功后把 token 用 Windows 加密（DPAPI，只有本机当前账号解得开）存到 data\cloudtoken.bin，下次打开自动载入"/>
+            </DockPanel>
+            <TextBlock Text="{Binding TokenStatus}" TextWrapping="Wrap" Margin="0 4 0 0"/>
+        </StackPanel>
+
+        <!-- ② 账号与环境 -->
+        <StackPanel DockPanel.Dock="Top" Margin="0 0 0 6" IsEnabled="{Binding IsIdle}">
+            <TextBlock Text="② 目标账号" FontWeight="Bold" Margin="0 0 0 2"/>
+            <DockPanel>
+                <TextBlock Text="userId" VerticalAlignment="Center" Margin="0 0 6 0"/>
+                <TextBox Text="{Binding UserIdText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
+                         ToolTip="编辑器调试的默认账号是 100"/>
+            </DockPanel>
+            <WrapPanel Margin="0 4 0 0">
+                <TextBlock Text="环境" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                <RadioButton Content="debug 编辑器" GroupName="CloudEnv" IsChecked="{Binding IsDebug}" Margin="0 0 10 0"/>
+                <RadioButton Content="test 测试" GroupName="CloudEnv" IsChecked="{Binding IsTest}" Margin="0 0 10 0"/>
+                <RadioButton Content="formal 正式" GroupName="CloudEnv" IsChecked="{Binding IsFormal}" Foreground="Firebrick"/>
+            </WrapPanel>
+        </StackPanel>
+
+        <!-- ③ 操作 -->
+        <StackPanel DockPanel.Dock="Top" Margin="0 0 0 6" IsEnabled="{Binding IsIdle}">
+            <TextBlock Text="③ 操作" FontWeight="Bold" Margin="0 0 0 2"/>
+            <UniformGrid Columns="2">
+                <Button Content="查看概况" Command="{Binding Cmd_Query}" Margin="0 0 2 0"/>
+                <Button Content="删除所有区服存档" Command="{Binding Cmd_ClearAll}" Foreground="Firebrick" Margin="2 0 0 0"
+                        ToolTip="清空全部分区存档 + 网关段（gsui_ 等其它 key 不动），游戏下次进入按新号建档"/>
+            </UniformGrid>
+        </StackPanel>
+
+        <!-- 区服列表（结果与各段存档看右侧「存档」页） -->
+        <Grid IsEnabled="{Binding IsIdle}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="区服（查看概况后列出，点选一个区）" FontWeight="Bold" Margin="0 0 0 2"/>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <TextBlock Text="{Binding Title}" FontWeight="Bold" Width="64"/>
+                            <TextBlock Text="{Binding Info}" Foreground="Gray" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Grid.Row="2" Content="删除选中区全部数据" Command="{Binding Cmd_ClearServer}" Foreground="Firebrick" Margin="0 4 0 0"
+                    ToolTip="清空列表里选中的那个区的全部分区存档，其它区和网关段不动"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

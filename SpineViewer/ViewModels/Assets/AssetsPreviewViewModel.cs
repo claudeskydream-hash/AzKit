@@ -75,6 +75,7 @@ namespace SpineViewer.ViewModels.Assets
                         BackgroundColor = SFML.Graphics.Color.Transparent,
                     };
                     SetAutoResolution(exporter, bounds);
+                    System.IO.Directory.CreateDirectory(AssetsItemViewModel.PreviewCacheDirectory);
                     exporter.Export(m.PreviewFilePath, sp);
                 }
                 catch (Exception ex)
@@ -124,6 +125,7 @@ namespace SpineViewer.ViewModels.Assets
                     using var sp = new SpineObject(m.LocalFullPath) { UsePma = PreviewPma };
                     var bounds = sp.GetCurrentBounds();
                     SetAutoResolution(exporter, bounds);
+                    System.IO.Directory.CreateDirectory(AssetsItemViewModel.PreviewCacheDirectory);
                     exporter.Export(m.PreviewFilePath, sp);
                     success++;
                 }

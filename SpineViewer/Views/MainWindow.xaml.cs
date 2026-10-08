@@ -100,7 +100,7 @@ public partial class MainWindow : Window
         InitializeLogConfiguration();
 
         // Initialize Wallpaper RenderWindow
-        _wallpaperRenderWindow = new(new(1, 1), "SpineViewerWallpaper", SFML.Window.Styles.None);
+        _wallpaperRenderWindow = new(new(1, 1), "AzKitWallpaper", SFML.Window.Styles.None);
         _wallpaperRenderWindow.MaxFps = 30;
 
         var handle = _wallpaperRenderWindow.SystemHandle;
@@ -634,6 +634,76 @@ public partial class MainWindow : Window
 
         // 跳过 Expander 事件处理
         e.Handled = true;
+    }
+
+    #endregion
+
+    #region [AzureSail 新增] 本地资源分组折叠
+
+    /// <summary>
+    /// 被折叠的分组名。分组开了虚拟化，滚出视野的分组会被回收、再出现时按模板重建（默认展开），
+    /// 所以折叠状态不能只放在 Expander 上，要记在这里、在 Loaded 时还原
+    /// </summary>
+    private readonly HashSet<string> _collapsedLocalAssetsGroups = [];
+
+    private static string? GetGroupName(Expander expander) =>
+        (expander.DataContext as CollectionViewGroup)?.Name?.ToString();
+
+    private void LocalAssetsGroupExpander_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander expander || GetGroupName(expander) is not string name) return;
+        expander.IsExpanded = !_collapsedLocalAssetsGroups.Contains(name);
+    }
+
+    private void LocalAssetsGroupExpander_Toggled(object sender, RoutedEventArgs e)
+    {
+        // 只认分组自己的 Expander，子元素冒泡上来的不管
+        if (!ReferenceEquals(sender, e.OriginalSource)) return;
+        if (sender is not Expander expander || GetGroupName(expander) is not string name) return;
+        if (expander.IsExpanded) _collapsedLocalAssetsGroups.Remove(name);
+        else _collapsedLocalAssetsGroups.Add(name);
+    }
+
+    private void LocalAssetsCollapseAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (_localAssetsItemListBox.Items.Groups is { } groups)
+        {
+            foreach (var g in groups.OfType<CollectionViewGroup>())
+            {
+                if (g.Name?.ToString() is string name) _collapsedLocalAssetsGroups.Add(name);
+            }
+        }
+        SetRealizedLocalAssetsExpanders(false);
+    }
+
+    private void LocalAssetsExpandAll_Click(object sender, RoutedEventArgs e)
+    {
+        _collapsedLocalAssetsGroups.Clear();
+        SetRealizedLocalAssetsExpanders(true);
+    }
+
+    /// <summary>当前已生成的分组 Expander 一起设；没生成的等 Loaded 时按记录还原</summary>
+    private void SetRealizedLocalAssetsExpanders(bool expanded)
+    {
+        var gen = _localAssetsItemListBox.ItemContainerGenerator;
+        if (_localAssetsItemListBox.Items.Groups is not { } groups) return;
+        foreach (var g in groups)
+        {
+            if (gen.ContainerFromItem(g) is not GroupItem groupItem) continue;
+            if (FindVisualChild<Expander>(groupItem) is { } expander)
+                expander.IsExpanded = expanded;
+        }
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T t) return t;
+            if (FindVisualChild<T>(child) is { } found) return found;
+        }
+        return null;
     }
 
     #endregion

@@ -12,6 +12,9 @@
         <OutputPath>$(BaseOutputPath)\$(Configuration)\$(PlatformTarget)</OutputPath>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <Version>0.16.34</Version>
+        <!-- [AzureSail] 程序改名 AzKitCLI（命名空间仍为 SpineViewer） -->
+        <AssemblyName>AzKitCLI</AssemblyName>
+        <Product>AzKitCLI</Product>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 

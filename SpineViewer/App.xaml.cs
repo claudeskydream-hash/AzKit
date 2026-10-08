@@ -24,18 +24,24 @@ namespace SpineViewer
     /// </summary>
     public partial class App : System.Windows.Application
     {
+        // [AzureSail] 本程序已改名 AzKit（AzureSail 辅助工具合集），基于 ww-rm/SpineViewer v0.16.34 魔改。
+        // 代码命名空间仍沿用 SpineViewer，方便对照上游；对外的名字（窗口标题、exe、单实例、开机自启、文件关联）一律 AzKit。
 #if DEBUG
         public const bool IsDebug = true;
-        public const string AppName = "SpineViewer_D";
-        public const string ProgId = "SpineViewer_D.skel";
+        public const string AppName = "AzKit_D";
+        public const string ProgId = "AzKit_D.skel";
 #else
         public const bool IsDebug = false;
-        public const string AppName = "SpineViewer";
-        public const string ProgId = "SpineViewer.skel";
+        public const string AppName = "AzKit";
+        public const string ProgId = "AzKit.skel";
 #endif
 
-        public const string GithubOwner = "ww-rm";
-        public const string GithubRepo = "SpineViewer";
+        /// <summary>「关于」页的项目地址与检查更新指向魔改版仓库，避免更新到不带 AzureSail 改动的上游原版</summary>
+        public const string GithubOwner = "claudeskydream-hash";
+        public const string GithubRepo = "AzKit";
+
+        /// <summary>上游项目（原版 SpineViewer）</summary>
+        public const string UpstreamUrl = "https://github.com/ww-rm/SpineViewer";
 
         public const string AutoRunFlag = "--autorun";
         private const string MutexName = $"__{AppName}_Instance__";
@@ -52,7 +58,7 @@ namespace SpineViewer
         public static readonly string CacheDirectory = Path.Combine(ProcessDirectory, "cache");
 
         private static readonly string AutoRunCommand = $"\"{ProcessPath}\" {AutoRunFlag}";
-        private static readonly string SkelFileDescription = $"SpineViewer File";
+        private static readonly string SkelFileDescription = $"AzKit File";
         private static readonly string SkelIconFilePath = Path.Combine(ProcessDirectory, "Resources\\Images\\skel.ico");
         private static readonly string ShellOpenCommand = $"\"{ProcessPath}\" \"%1\"";
 

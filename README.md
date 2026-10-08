@@ -1,3 +1,30 @@
+# AzKit · AzureSail 辅助工具合集
+
+> 本仓库是 [ww-rm/SpineViewer](https://github.com/ww-rm/SpineViewer)（v0.16.34）的**私有魔改版**，为 AzureSail 项目定制，改名 **AzKit**。
+> 上游没有声明开源许可证，版权归原作者所有，所以本仓库保持**私有**，不对外分发。下面「AzKit 新增」之后的内容是上游原版 README。
+
+## 程序
+
+| 文件 | 说明 |
+|---|---|
+| `AzKit.exe` | 主程序（原 `SpineViewer.exe`），窗口标题、单实例、开机自启、文件关联都叫 AzKit |
+| `AzKitCLI.exe` | 命令行（原 `SpineViewerCLI.exe`），如 `AzKitCLI.exe export <skel> -f Png -o x.png -a <动画名>` 校验动画名 |
+
+只改了程序集名、对外名字与图标；**代码命名空间仍是 `SpineViewer.*`**，方便对照、合并上游。
+
+编译：`dotnet build SpineViewer.sln -c Release -p:Platform=x64`，产物在 `out/Release/x64/`。
+部署：先关掉 AzKit，把 `AzKit.*`（改了 `Spine` 项目再加 `Spine.dll`）拷到程序目录。
+
+## AzKit 新增（相对上游）
+
+- **资源库**：单击即在「模型动画」实时播放；预览图存程序 `cache/previews/`；按一级目录分组折叠；右键「用 Spine 重新导出」「配置到特效表」「配置到怪物」「设置导出」，以及「全部导出」。
+- **换装页**（左侧栏）：按部位关键词匹配插槽，切换附件（`ISkeleton` 为此加了 `GetSlotAttachmentNames` / `SetAttachment`，9 个运行时版本都实现）。
+- **母骨骼导出页**（左侧栏）：编辑 AzureSail 的 `tools/SpineHeroExport/heroes.json` 并调 `export_hero.py`。
+- **云存档页**（左侧栏 + 右侧「存档」页）：粘贴浏览器 Cookie 解析星火后台 token（可用 Windows DPAPI 加密记住），按账号 / 环境查询存档、按区服汇总，删除全部区服存档或某个区；删前备份到 `data/cloudbackup/`，右侧有状态监测与请求记录。
+- **批量导出 .spine 源文件**、顶部菜单「AZ」（导表、常用 bat）。
+
+---
+
 # [SpineViewer](https://github.com/ww-rm/SpineViewer)
 
 [![Build and Release](https://github.com/ww-rm/SpineViewer/actions/workflows/dotnet-release.yml/badge.svg)](https://github.com/ww-rm/SpineViewer/actions/workflows/dotnet-release.yml)

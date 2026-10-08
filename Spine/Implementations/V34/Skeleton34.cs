@@ -94,6 +94,22 @@ namespace Spine.Implementations.V34
         public void SetToSetupPose() => _o.SetToSetupPose();
         public void SetBonesToSetupPose() => _o.SetBonesToSetupPose();
         public void SetSlotsToSetupPose() => _o.SetSlotsToSetupPose();
+        public IReadOnlyList<string> GetSlotAttachmentNames(int slotIndex)
+        {
+            // NOTE: 3.7 及以下只有 FindNamesForSlot
+            List<string> names = [];
+            _o.Skin?.FindNamesForSlot(slotIndex, names);
+            _o.Data.DefaultSkin?.FindNamesForSlot(slotIndex, names);
+            return names.Distinct().ToList();
+        }
+
+        public bool SetAttachment(string slotName, string? attachmentName)
+        {
+            if (!_slotsByName.ContainsKey(slotName)) return false;
+            if (attachmentName is not null && _o.GetAttachment(slotName, attachmentName) is null) return false;
+            _o.SetAttachment(slotName, attachmentName);
+            return true;
+        }
         public void Update(float delta) => _o.Update(delta);
 
         public override string ToString() => _o.ToString();

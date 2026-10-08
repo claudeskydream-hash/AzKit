@@ -116,6 +116,17 @@ namespace Spine.Interfaces
         public void SetSlotsToSetupPose();
 
         /// <summary>
+        /// 列出插槽在当前皮肤与 default 皮肤里可用的全部附件名 (皮肤里登记的键名, 即 SetAttachment 用的名字)
+        /// </summary>
+        public IReadOnlyList<string> GetSlotAttachmentNames(int slotIndex);
+
+        /// <summary>
+        /// 设置插槽附件, <paramref name="attachmentName"/> 为 <c>null</c> 时清空插槽
+        /// </summary>
+        /// <returns>插槽或附件不存在时返回 false 且不做修改</returns>
+        public bool SetAttachment(string slotName, string? attachmentName);
+
+        /// <summary>
         /// 更新时间
         /// </summary>
         public void Update(float delta);

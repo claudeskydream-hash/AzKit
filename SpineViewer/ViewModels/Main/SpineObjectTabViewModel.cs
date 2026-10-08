@@ -17,6 +17,12 @@ namespace SpineViewer.ViewModels.Main
         private readonly ObservableCollection<SkinViewModel> _skins = [];
         private readonly ObservableCollection<SlotViewModel> _slots = [];
         private readonly ObservableCollection<AnimationTrackViewModel> _animationTracks = [];
+        private readonly OutfitViewModel _outfit = new();
+
+        /// <summary>
+        /// 换装页 (AzureSail 魔改)
+        /// </summary>
+        public OutfitViewModel Outfit => _outfit;
 
         public SpineObjectModel[] SelectedObjects
         {
@@ -44,7 +50,7 @@ namespace SpineViewer.ViewModels.Main
                     foreach (var obj in _selectedObjects.Skip(1))
                         commonSkinNames = commonSkinNames.Intersect(obj.Skins);
                     foreach (var name in commonSkinNames.Order())
-                        _skins.Add(new(name, _selectedObjects));
+                        _skins.Add(new(name, _selectedObjects, _outfit.RebuildAll));
 
                     IEnumerable<string> commonSlotNames = _selectedObjects[0].Slots;
                     foreach (var obj in _selectedObjects.Skip(1))
@@ -60,6 +66,9 @@ namespace SpineViewer.ViewModels.Main
                     foreach (var idx in commonTrackIndices.Order())
                         _animationTracks.Add(new(idx, _selectedObjects));
                 }
+
+                // 换装只对单个模型生效
+                _outfit.Spine = _selectedObjects.Length == 1 ? _selectedObjects[0] : null;
 
                 OnPropertyChanged();
             }
@@ -738,11 +747,13 @@ namespace SpineViewer.ViewModels.Main
         {
             private readonly SpineObjectModel[] _spines;
             private readonly string _name;
+            private readonly Action? _onStatusChanged;
 
-            public SkinViewModel(string name, SpineObjectModel[] spines)
+            public SkinViewModel(string name, SpineObjectModel[] spines, Action? onStatusChanged = null)
             {
                 _spines = spines;
                 _name = name;
+                _onStatusChanged = onStatusChanged;
             }
 
             public string Name => _name;
@@ -763,7 +774,11 @@ namespace SpineViewer.ViewModels.Main
                     if (value is null) return;
                     bool changed = false;
                     foreach (var sp in _spines) if (sp.SetSkinStatus(_name, (bool)value)) changed = true;
-                    if (changed) OnPropertyChanged();
+                    if (changed)
+                    {
+                        OnPropertyChanged();
+                        _onStatusChanged?.Invoke(); // 皮肤变了, 换装页的候选附件跟着变
+                    }
                 }
             }
         }

@@ -1,0 +1,117 @@
+﻿<Window x:Class="SpineViewer.Views.SpineSourceExportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:SpineSourceExportViewModel}"
+        mc:Ignorable="d"
+        Title="批量导出 Spine 源文件"
+        Background="{DynamicResource RegionBrush}"
+        Width="640"
+        Height="360"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 调用 Spine 命令行把 .spine 工程批量导出为 .skel + .atlas + .png -->
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom">
+            <WrapPanel HorizontalAlignment="Center">
+                <WrapPanel.Resources>
+                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonDefault}">
+                        <Setter Property="Margin" Value="5"/>
+                        <Setter Property="Width" Value="100"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button Content="开始导出" Click="ButtonOK_Click"/>
+                <Button Content="{DynamicResource Str_Cancel}" Click="ButtonCancel_Click"/>
+            </WrapPanel>
+        </Border>
+
+        <Border>
+            <Border.Resources>
+                <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyLabelStyle}">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Right"/>
+                </Style>
+                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource MyTextBoxStyle}"/>
+                <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MyToggleButtonBaseStyle}">
+                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                </Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonDefault}">
+                    <Setter Property="Margin" Value="5 0 0 0"/>
+                </Style>
+            </Border.Resources>
+
+            <StackPanel Grid.IsSharedSizeScope="True" Margin="10 15">
+                <!-- Spine 程序 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Spine 程序" ToolTip="Spine 安装目录下的 Spine.com（命令行版本）"/>
+                    <TextBox Grid.Column="1" Text="{Binding SpineExePath}"/>
+                    <Button Grid.Column="2" Content="..." Command="{Binding Cmd_BrowseSpineExe}"/>
+                </Grid>
+
+                <!-- 导出版本 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="导出版本" ToolTip="必须与游戏运行时一致（AzureSail 为 4.2.43）"/>
+                    <TextBox Grid.Column="1" Text="{Binding SpineVersion}"/>
+                </Grid>
+
+                <!-- 源目录 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="源目录" ToolTip="递归查找其中所有 .spine 工程文件"/>
+                    <TextBox Grid.Column="1" Text="{Binding SourceDirectory}"/>
+                    <Button Grid.Column="2" Content="..." Command="{Binding Cmd_BrowseSourceDirectory}"/>
+                </Grid>
+
+                <!-- 输出目录 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="输出目录" ToolTip="不要放在游戏的 res 目录里，挑好再拷进去"/>
+                    <TextBox Grid.Column="1" Text="{Binding OutputDirectory}"/>
+                    <Button Grid.Column="2" Content="..." Command="{Binding Cmd_BrowseOutputDirectory}"/>
+                </Grid>
+
+                <!-- 保持目录结构 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="保持目录结构" ToolTip="开：按源目录的层级输出；关：每个工程输出到 输出目录/工程名/"/>
+                    <ToggleButton Grid.Column="1" IsChecked="{Binding KeepStructure}"/>
+                </Grid>
+
+                <!-- 跳过已导出 -->
+                <Grid Margin="0 3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="LabelCol"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="跳过已导出" ToolTip="输出目录里已有比源文件新的 .skel 时跳过，中断后再点可以接着导"/>
+                    <ToggleButton Grid.Column="1" IsChecked="{Binding SkipExported}"/>
+                </Grid>
+
+                <TextBlock Margin="10 10 0 0" Opacity="0.7" TextWrapping="Wrap"
+                           Text="导出为二进制 .skel，每个骨骼单独打一张图集（骨骼、图集、贴图同名）。每 20 个工程合并调用一次 Spine，可随时取消；结果与失败原因见下方日志。"/>
+            </StackPanel>
+        </Border>
+    </DockPanel>
+</Window>

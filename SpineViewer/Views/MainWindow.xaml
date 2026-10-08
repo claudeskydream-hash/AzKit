@@ -6,8 +6,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        xmlns:views="clr-namespace:SpineViewer.Views"
         xmlns:res="clr-namespace:SpineViewer.Resources"
         xmlns:SFMLRenderer="clr-namespace:SFMLRenderer;assembly=SFMLRenderer"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         mc:Ignorable="d"
         x:Name="_mainWindow"
         d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel}}"
@@ -61,8 +63,25 @@
                         <MenuItem Header="{DynamicResource Str_OpenWorkspace}" Command="{Binding Cmd_OpenWorkspace}"/>
                         <MenuItem Header="{DynamicResource Str_SaveWorkspace}" Command="{Binding Cmd_SaveWorkspace}"/>
                         <Separator/>
+                        <!-- [AzureSail 新增] -->
+                        <MenuItem Header="批量导出 Spine 源文件..." Command="{Binding Cmd_ShowSpineSourceExportDialog}"/>
+                        <Separator/>
                         <MenuItem Header="{DynamicResource Str_PreferenceWithDots}" Command="{Binding PreferenceViewModel.Cmd_ShowPreferenceDialog}"/>
                         <!--<MenuItem Header="{DynamicResource Str_Exit}" InputGestureText="Alt+F4"/>-->
+                    </MenuItem>
+                    <!-- [AzureSail 新增] 项目快捷入口 -->
+                    <MenuItem Header="AZ">
+                        <MenuItem Header="导表" Command="{Binding Cmd_RunAzureSailGenTable}"/>
+                        <Separator/>
+                        <MenuItem Header="编译两端并拷 DLL（BuildAndCopy）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="BuildAndCopy.bat"/>
+                        <MenuItem Header="客户端竖屏调试（Debug-Client）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="Debug-Client.bat"/>
+                        <Separator/>
+                        <MenuItem Header="FGUI 发布后分发资源（sync-fgui-atlas）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="sync-fgui-atlas.bat"/>
+                        <MenuItem Header="生成资源统计 ref" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="生成资源统计ref.bat"/>
+                        <MenuItem Header="生成地形 MIX（只补缺的）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="生成地形MIX.bat"/>
+                        <Separator/>
+                        <MenuItem Header="诊断编辑器缓存（只诊断不删）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="清理编辑器缓存.bat"/>
+                        <MenuItem Header="修复顶部菜单不见（重新部署编辑器插件，先关编辑器）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="tools\SceEditorPlugin\Deploy.bat"/>
                     </MenuItem>
                     <!--<MenuItem Header="{DynamicResource Str_Tool}"/>-->
                     <!--<MenuItem Header="{DynamicResource Str_Download}"/>-->
@@ -933,6 +952,25 @@
                                             </StatusBarItem>
                                         </StatusBar>
 
+                                        <!-- [AzureSail 新增] 全部导出：只有设好了源目录与导出文件夹才显示 -->
+                                        <DockPanel DockPanel.Dock="Bottom" Margin="0 2"
+                                                   ToolTip="{Binding BatchExportToolTip}">
+                                            <DockPanel.Style>
+                                                <Style TargetType="DockPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasBatchExport}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DockPanel.Style>
+                                            <Button DockPanel.Dock="Left" Content="全部导出" Padding="10 0" Margin="0 0 6 0"
+                                                    Command="{Binding Cmd_BatchExportAll}"/>
+                                            <TextBlock VerticalAlignment="Center" Opacity="0.7" TextTrimming="CharacterEllipsis"
+                                                       Text="{Binding BatchExportText}"/>
+                                        </DockPanel>
+
                                         <!-- 本地资源库列表 -->
                                         <ListBox x:Name="_localAssetsRepoListBox" ItemsSource="{Binding AssetsRepos}">
                                             <i:Interaction.Triggers>
@@ -969,6 +1007,10 @@
                                                               CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
                                                     <MenuItem Header="{DynamicResource Str_EditAssetsRepo}"
                                                               Command="{Binding Cmd_EditAssetsRepo}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <!-- [AzureSail 新增] 把这个资源库设为「全部导出」的源，并选导出到的文件夹（全场只有一个） -->
+                                                    <MenuItem Header="设为全部导出文件夹..."
+                                                              Command="{Binding Cmd_SetBatchExportFolder}"
                                                               CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
                                                     <Separator/>
                                                     <MenuItem Header="{DynamicResource Str_ImportSelectedAssets}"
@@ -1035,7 +1077,24 @@
                                                         
                                                         <!-- 资源库信息 -->
                                                         <StackPanel Grid.Column="1" Margin="5 0">
-                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                                <!-- [AzureSail 新增] 全部导出的源目录标记 -->
+                                                                <Border Margin="6 0 0 0" Padding="4 0" CornerRadius="2"
+                                                                        Background="{StaticResource SuccessBrush}" VerticalAlignment="Center">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsBatchExportSource}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock Text="全部导出" FontSize="11" Foreground="White"/>
+                                                                </Border>
+                                                            </StackPanel>
                                                             <TextBlock Text="{Binding LocalDirectory}" Opacity="0.6"/>
                                                         </StackPanel>
                                                         
@@ -1062,12 +1121,64 @@
                                             </StatusBarItem>
                                         </StatusBar>
 
-                                        <hc:TextBox DockPanel.Dock="Top"
-                                                    hc:InfoElement.Placeholder="{DynamicResource Str_Filter}"
-                                                    Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <!-- [AzureSail 修改] 筛选框右侧加「全部折叠 / 全部展开」分组 -->
+                                        <DockPanel DockPanel.Dock="Top">
+                                            <Button DockPanel.Dock="Right" Content="全部展开" Padding="6 0" Margin="2 0 0 0"
+                                                    ToolTip="展开当前列表里的所有分组"
+                                                    Click="LocalAssetsExpandAll_Click"/>
+                                            <Button DockPanel.Dock="Right" Content="全部折叠" Padding="6 0" Margin="2 0 0 0"
+                                                    ToolTip="折叠当前列表里的所有分组"
+                                                    Click="LocalAssetsCollapseAll_Click"/>
+                                            <hc:TextBox hc:InfoElement.Placeholder="{DynamicResource Str_Filter}"
+                                                        Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DockPanel>
 
                                         <!-- 本地资源库文件列表 -->
-                                        <ListBox x:Name="_localAssetsItemListBox" ItemsSource="{Binding ShownItems}">
+                                        <!-- [AzureSail 修改] 按第一级目录分组显示, 组内按相对路径排序 -->
+                                        <ListBox x:Name="_localAssetsItemListBox"
+                                                 VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                                            <ListBox.Resources>
+                                                <CollectionViewSource x:Key="_localAssetsItemsView" Source="{Binding ShownItems}">
+                                                    <CollectionViewSource.GroupDescriptions>
+                                                        <PropertyGroupDescription PropertyName="GroupName"/>
+                                                    </CollectionViewSource.GroupDescriptions>
+                                                    <CollectionViewSource.SortDescriptions>
+                                                        <scm:SortDescription PropertyName="GroupName"/>
+                                                        <scm:SortDescription PropertyName="RelativePath"/>
+                                                    </CollectionViewSource.SortDescriptions>
+                                                </CollectionViewSource>
+                                            </ListBox.Resources>
+                                            <ListBox.ItemsSource>
+                                                <Binding Source="{StaticResource _localAssetsItemsView}"/>
+                                            </ListBox.ItemsSource>
+
+                                            <ListBox.GroupStyle>
+                                                <GroupStyle>
+                                                    <GroupStyle.ContainerStyle>
+                                                        <Style TargetType="GroupItem">
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="GroupItem">
+                                                                        <!-- 折叠状态记在窗口里（按组名），分组虚拟化回收后重新出现时由 Loaded 还原 -->
+                                                                        <Expander IsExpanded="True" Margin="0 0 0 2"
+                                                                                  Loaded="LocalAssetsGroupExpander_Loaded"
+                                                                                  Expanded="LocalAssetsGroupExpander_Toggled"
+                                                                                  Collapsed="LocalAssetsGroupExpander_Toggled">
+                                                                            <Expander.Header>
+                                                                                <TextBlock FontWeight="Bold">
+                                                                                    <Run Text="{Binding Name, Mode=OneWay}"/>
+                                                                                    <Run Text="{Binding ItemCount, Mode=OneWay, StringFormat=（{0}）}"/>
+                                                                                </TextBlock>
+                                                                            </Expander.Header>
+                                                                            <ItemsPresenter/>
+                                                                        </Expander>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </GroupStyle.ContainerStyle>
+                                                </GroupStyle>
+                                            </ListBox.GroupStyle>
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="SelectionChanged">
                                                     <i:InvokeCommandAction Command="{Binding Cmd_AssetsItemSelectionChanged}"
@@ -1085,6 +1196,25 @@
                                                     <MenuItem Header="{DynamicResource Str_ImportSelectedAssets}"
                                                               Command="{Binding Cmd_ImportSelectedAssets}"
                                                               CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <!-- [AzureSail 新增] -->
+                                                    <MenuItem Header="用 Spine 重新导出（.spine 源文件）"
+                                                              Command="{Binding Cmd_ExportSpineSource}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <MenuItem Header="配置到特效表..."
+                                                              Command="{Binding Cmd_ConfigEffectTable}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <MenuItem Header="配置到怪物..."
+                                                              Command="{Binding Cmd_ConfigMonsterTable}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <Separator/>
+                                                    <!-- [AzureSail 新增] 全部导出时，只有设置了导出的才拷到导出文件夹 -->
+                                                    <MenuItem Header="设置导出"
+                                                              Command="{Binding Cmd_MarkExport}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <MenuItem Header="取消导出"
+                                                              Command="{Binding Cmd_UnmarkExport}"
+                                                              CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                                                    <Separator/>
                                                     <MenuItem Header="{DynamicResource Str_GeneratePreviews}"
                                                               Command="{Binding Cmd_GeneratePreviews}"
                                                               CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
@@ -1106,9 +1236,26 @@
 
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Margin="0 3">
-                                                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding RelativePath}" Opacity="0.6"/>
+                                                    <StackPanel Margin="12 3 0 3">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding FileName}" FontWeight="SemiBold"/>
+                                                            <!-- [AzureSail 新增] 已设置导出：全部导出时会拷一份到导出文件夹 -->
+                                                            <Border Margin="6 0 0 0" Padding="4 0" CornerRadius="2"
+                                                                    Background="{StaticResource PrimaryBrush}" VerticalAlignment="Center">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsExportMarked}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <TextBlock Text="导出" FontSize="11" Foreground="White"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding DirectoryPath}" Opacity="0.6"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
@@ -1116,6 +1263,99 @@
                                         </ListBox>
                                     </DockPanel>
                                 </Grid>
+                            </TabItem>
+
+                            <!-- 换装 (AzureSail 魔改): 每个部位一组候选插槽, 亮一个、其余清空, 同游戏里换武器 -->
+                            <TabItem DataContext="{Binding SpineObjectTabViewModel.Outfit}">
+                                <TabItem.Header>
+                                    <Border Style="{StaticResource MyTabItemHeaderContainerStyle}"
+                                            MouseLeftButtonDown="MainTabControlHeader_MouseLeftButtonDown"
+                                            ToolTip="换装">
+                                        <Viewbox Width="24" Height="24">
+                                            <Path Data="{StaticResource Geo_Shirt}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                        </Viewbox>
+                                    </Border>
+                                </TabItem.Header>
+                                <DockPanel Margin="4">
+                                    <!-- 顶部: 当前模型 + 恢复默认 -->
+                                    <DockPanel DockPanel.Dock="Top" Margin="0 0 0 4">
+                                        <Button DockPanel.Dock="Right" Content="全部恢复默认" Command="{Binding Cmd_ResetAll}"/>
+                                        <Label Content="{Binding ModelTitle}" HorizontalAlignment="Left" FontWeight="Bold"/>
+                                    </DockPanel>
+                                    <TextBlock DockPanel.Dock="Top" Margin="4 0 4 6" TextWrapping="Wrap" Foreground="Gray"
+                                               Text="在「模型」页的列表里选中一个模型后到这里换装。关键词逗号分隔，插槽名包含任一即归入该部位，前缀 - 表示排除；鼠标悬停在部位上看匹配到的插槽。"/>
+
+                                    <!-- 动画列表: 点选即在轨道 0 循环播放 -->
+                                    <GroupBox DockPanel.Dock="Top" Header="动画（点选即播放）" Margin="0 0 0 6"
+                                              IsEnabled="{Binding IsAvailable}">
+                                        <ListBox ItemsSource="{Binding Animations}"
+                                                 SelectedItem="{Binding SelectedAnimation}"
+                                                 MaxHeight="220"/>
+                                    </GroupBox>
+
+                                    <Label DockPanel.Dock="Top" Content="部位" FontWeight="Bold" HorizontalAlignment="Left" Margin="0 0 0 2"/>
+
+                                    <!-- 部位列表: 每个部位一张卡片, 上面下拉换装, 下面关键词 -->
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" IsEnabled="{Binding IsAvailable}">
+                                        <ItemsControl ItemsSource="{Binding Parts}" Grid.IsSharedSizeScope="True">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0 0 0 8" Padding="8 6" CornerRadius="4" BorderThickness="1"
+                                                            BorderBrush="{DynamicResource BorderBrush}" ToolTip="{Binding MatchedSlots}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" SharedSizeGroup="ColOutfitPart"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="4"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+                                                            <Label Grid.Row="0" Grid.Column="0" Content="{Binding Name}" FontWeight="Bold"
+                                                                   HorizontalAlignment="Left" Margin="0 0 8 0"/>
+                                                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                                                      ItemsSource="{Binding Options}"
+                                                                      SelectedItem="{Binding SelectedOption}"
+                                                                      IsEnabled="{Binding HasSlots}"/>
+                                                            <Label Grid.Row="2" Grid.Column="0" Content="关键词" Foreground="Gray"
+                                                                   HorizontalAlignment="Left" Margin="0 0 8 0"/>
+                                                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Keywords, UpdateSourceTrigger=LostFocus}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </DockPanel>
+                            </TabItem>
+
+                            <!-- 母骨骼导出 (AzureSail 魔改): 原「文件 → 母骨骼导出英雄...」对话框, 挪到左侧栏常驻 -->
+                            <TabItem DataContext="{Binding HeroExportViewModel}">
+                                <TabItem.Header>
+                                    <Border Style="{StaticResource MyTabItemHeaderContainerStyle}"
+                                            MouseLeftButtonDown="MainTabControlHeader_MouseLeftButtonDown"
+                                            ToolTip="母骨骼导出英雄">
+                                        <Viewbox Width="24" Height="24">
+                                            <Path Data="{StaticResource Geo_UserExport}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                        </Viewbox>
+                                    </Border>
+                                </TabItem.Header>
+                                <views:HeroExportPanel/>
+                            </TabItem>
+
+                            <!-- 云存档 (AzureSail 魔改): 查询、删除玩家的星火云存档。原在游戏 GM 面板，星火沙箱不让游戏发 HTTP 才挪到这里 -->
+                            <TabItem DataContext="{Binding CloudSaveViewModel}">
+                                <TabItem.Header>
+                                    <Border Style="{StaticResource MyTabItemHeaderContainerStyle}"
+                                            MouseLeftButtonDown="MainTabControlHeader_MouseLeftButtonDown"
+                                            ToolTip="云存档（AzureSail 玩家数据查询 / 删档）">
+                                        <Viewbox Width="24" Height="24">
+                                            <Path Data="{StaticResource Geo_Database}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                        </Viewbox>
+                                    </Border>
+                                </TabItem.Header>
+                                <views:CloudSavePanel/>
                             </TabItem>
 
                             <!-- GitHub 在线资源 -->
@@ -1367,7 +1607,7 @@
                                 <RowDefinition Height="1.2*"/>
                             </Grid.RowDefinitions>
 
-                            <TabControl>
+                            <TabControl SelectedIndex="{Binding ViewTabIndex}">
                                 <TabControl.Resources>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Margin" Value="10 0"/>
@@ -1443,6 +1683,21 @@
                                     <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{DynamicResource DarkDefaultBrush}">
                                         <Image Source="{Binding AssetsPreviewViewModel.PreviewImage, Mode=OneWay}" Stretch="Uniform"/>
                                     </Border>
+                                </TabItem>
+
+                                <!-- [AzureSail 新增] 存档标签页：左侧栏「云存档」页的结果与选中区的各段存档（序号 2，CloudSaveViewModel.DetailTabIndex） -->
+                                <TabItem DataContext="{Binding CloudSaveViewModel}">
+                                    <TabItem.Header>
+                                        <Border Style="{StaticResource MyTabItemHeaderContainerStyle}" ToolTip="云存档的查询结果与各段存档内容">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                                <Viewbox Width="24" Height="24">
+                                                    <Path Data="{StaticResource Geo_Database}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                                </Viewbox>
+                                                <TextBlock Text="存档"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </TabItem.Header>
+                                    <views:CloudSaveDetailPanel/>
                                 </TabItem>
 
                             </TabControl>

@@ -269,6 +269,60 @@ namespace SpineViewer.ViewModels.Main
         }
 
         /// <summary>
+        /// [AzureSail 新增] 资源库单击预览用的模型。单击新的资源时替换它, 不影响手动导入的模型
+        /// </summary>
+        private SpineObjectModel? _previewObject;
+
+        /// <summary>
+        /// [AzureSail 新增] 把资源库里单击的模型放进预览槽: 替换上一个预览模型、播放第一个动画、
+        /// 按动画全程包围盒聚焦视图并选中它
+        /// </summary>
+        /// <returns>是否加载成功</returns>
+        public bool ShowPreviewObject(string skelPath)
+        {
+            SpineObjectModel sp;
+            try
+            {
+                sp = new SpineObjectModel(skelPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug(ex.ToString());
+                _logger.Error("Failed to preview: {0}, {1}", skelPath, ex.Message);
+                return false;
+            }
+
+            lock (_spineObjectModels.Lock)
+            {
+                // 用户可能已手动移除过上一个预览模型, 只有还在列表里时才由这里释放
+                if (_previewObject is not null && _spineObjectModels.Remove(_previewObject))
+                    _previewObject.Dispose();
+                _spineObjectModels.Insert(0, sp);
+                _previewObject = sp;
+            }
+
+            // 特效在初始姿势下包围盒常为 0, 必须按动画全程计算
+            Rect bounds;
+            using (var copy = sp.GetSpineObject())
+                bounds = copy.GetAnimationBounds();
+
+            var renderer = _vmMain.SFMLRendererViewModel;
+            renderer.CenterX = (float)(bounds.Left + bounds.Width / 2);
+            renderer.CenterY = (float)(bounds.Top + bounds.Height / 2);
+            if (bounds.Width > 1 && bounds.Height > 1)
+            {
+                renderer.Zoom = MathF.Min(
+                    renderer.ResolutionX / (float)bounds.Width,
+                    renderer.ResolutionY / (float)bounds.Height
+                ) * 0.9f;
+            }
+
+            RequestSelectionChanging?.Invoke(this, new(NotifyCollectionChangedAction.Reset));
+            RequestSelectionChanging?.Invoke(this, new(NotifyCollectionChangedAction.Add, sp));
+            return true;
+        }
+
+        /// <summary>
         /// 计算最合适添加模型的中心坐标位置
         /// </summary>
         public Point ComputeBestAddingPosition(Rect[] existedBounds, Rect newBound)

@@ -9,6 +9,7 @@ using SpineViewer.Views.AssetsDialogs;
 using SpineViewer.Views.ExporterDialogs;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,6 +33,15 @@ namespace SpineViewer.Services
         public static bool ShowSystemInfoDialog() => ShowDialog<SystemInfoDialog>();
 
         public static bool ShowAboutDialog() => ShowDialog<AboutDialog>();
+
+        // [AzureSail 新增] 批量导出 Spine 源文件
+        public static bool ShowSpineSourceExportDialog(SpineViewer.ViewModels.SpineSourceExportViewModel vm) => ShowDialog<SpineSourceExportDialog>(vm);
+
+        // [AzureSail 新增] 配置到特效表
+        public static bool ShowEffectTableDialog(SpineViewer.ViewModels.EffectTableViewModel vm) => ShowDialog<EffectTableDialog>(vm);
+
+        // [AzureSail 新增] 配置到怪物
+        public static bool ShowMonsterTableDialog(SpineViewer.ViewModels.MonsterTableViewModel vm) => ShowDialog<MonsterTableDialog>(vm);
 
         public static bool ShowGeneratePreviewsDialog(AssetsPreviewViewModel vm) => ShowDialog<GeneratePreviewsDialog>(vm);
 
@@ -73,9 +83,12 @@ namespace SpineViewer.Services
         /// 获取用户选择的文件夹
         /// </summary>
         /// <returns>是否确认了选择</returns>
-        public static bool ShowOpenFolderDialog(out string? folderName)
+        public static bool ShowOpenFolderDialog(out string? folderName, string? title = null, string? initialDirectory = null)
         {
+            // [AzureSail 修改] 可带标题与初始目录（设置「全部导出」的导出文件夹时用）
             var dialog = new OpenFolderDialog() { Multiselect = false };
+            if (!string.IsNullOrWhiteSpace(title)) dialog.Title = title;
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && Directory.Exists(initialDirectory)) dialog.InitialDirectory = initialDirectory;
             if (dialog.ShowDialog() is true)
             {
                 folderName = dialog.FolderName;
