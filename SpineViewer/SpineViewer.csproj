@@ -42,6 +42,8 @@
       <PackageReference Include="NLog" Version="5.4.0" />
       <PackageReference Include="SkiaSharp" Version="3.119.0" />
       <PackageReference Include="System.Management" Version="9.0.5" />
+      <!-- [AzureSail 新增] 云存档「一键获取」凭证：内置浏览器登录星火创作者中心后读 token Cookie -->
+      <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3485.44" />
     </ItemGroup>
 
     <ItemGroup>

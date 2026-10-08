@@ -40,6 +40,49 @@ namespace SpineViewer.Services
         // [AzureSail 新增] 配置到怪物
         public static bool ShowMonsterTableDialog(SpineViewer.ViewModels.MonsterTableViewModel vm) => ShowDialog<MonsterTableDialog>(vm);
 
+        // [AzureSail 新增] 云存档 · 历史记录：非模态（开着也能继续操作），同时只开一个，再点就把它提到前面
+        private static CloudCallHistoryDialog? _cloudCallHistory;
+
+        public static void ShowCloudCallHistory(SpineViewer.ViewModels.CloudSaveViewModel vm)
+        {
+            if (_cloudCallHistory is not null)
+            {
+                if (_cloudCallHistory.WindowState == WindowState.Minimized)
+                    _cloudCallHistory.WindowState = WindowState.Normal;
+                _cloudCallHistory.Activate();
+                return;
+            }
+
+            _cloudCallHistory = new CloudCallHistoryDialog { Owner = App.Current.MainWindow, DataContext = vm };
+            _cloudCallHistory.Closed += (_, _) => _cloudCallHistory = null;
+            _cloudCallHistory.Show();
+        }
+
+        // [AzureSail 新增] 一键获取后台凭证：内置浏览器登录星火创作者中心，返回 token；取消返回 null
+        public static string? ShowSparkLoginDialog()
+        {
+            var dialog = new SparkLoginDialog { Owner = App.Current.MainWindow };
+            return dialog.ShowDialog() is true ? dialog.Token : null;
+        }
+
+        // [AzureSail 新增] 线上日志：非模态、同时只开一个（同上）
+        private static OnlineLogDialog? _onlineLog;
+
+        public static void ShowOnlineLog(SpineViewer.ViewModels.OnlineLogViewModel vm)
+        {
+            if (_onlineLog is not null)
+            {
+                if (_onlineLog.WindowState == WindowState.Minimized)
+                    _onlineLog.WindowState = WindowState.Normal;
+                _onlineLog.Activate();
+                return;
+            }
+
+            _onlineLog = new OnlineLogDialog { Owner = App.Current.MainWindow, DataContext = vm };
+            _onlineLog.Closed += (_, _) => _onlineLog = null;
+            _onlineLog.Show();
+        }
+
         public static bool ShowGeneratePreviewsDialog(AssetsPreviewViewModel vm) => ShowDialog<GeneratePreviewsDialog>(vm);
 
         public static bool ShowEditLocalAssetsRepoDialog(LocalAssetsRepoModel vm) => ShowDialog<EditLocalAssetsRepoDialog>(vm);
@@ -131,6 +174,24 @@ namespace SpineViewer.Services
                 InitialDirectory = initialDirectory,
                 DefaultExt = ".jcfg",
                 Filter = "Json|*.jcfg;*.json|All|*.*",
+            };
+            if (dialog.ShowDialog() is true)
+            {
+                fileName = dialog.FileName;
+                return true;
+            }
+            fileName = null;
+            return false;
+        }
+
+        // [AzureSail 新增] 线上日志另存为 .log
+        public static bool ShowSaveLogDialog(ref string? fileName)
+        {
+            var dialog = new SaveFileDialog()
+            {
+                FileName = fileName,
+                DefaultExt = ".log",
+                Filter = "日志|*.log;*.txt|All|*.*",
             };
             if (dialog.ShowDialog() is true)
             {

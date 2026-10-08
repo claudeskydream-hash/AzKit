@@ -16,11 +16,13 @@
             <TextBox Text="{Binding CookieText, UpdateSourceTrigger=PropertyChanged}" Height="64"
                      TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                      VerticalContentAlignment="Top" FontFamily="Consolas"
-                     ToolTip="只取其中 token= 那一段，其余不发给后台；解析成功后输入框会清空，不把 token 留在屏幕上"/>
+                     ToolTip="只取其中 token= 那一段，其余不发给后台；解析成功（或启动载入记住的凭证）后这里显示正在用的 token"/>
             <DockPanel Margin="0 4 0 0">
                 <Button DockPanel.Dock="Left" Content="解析" Width="64" Command="{Binding Cmd_ParseToken}"/>
-                <Button DockPanel.Dock="Right" Content="清除" Command="{Binding Cmd_ForgetToken}"
-                        ToolTip="删掉本机加密保存的 token（换账号、或这台电脑不再用时）"/>
+                <Button DockPanel.Dock="Left" Content="一键获取" Command="{Binding Cmd_GetTokenOneClick}" Margin="4 0 0 0"
+                        ToolTip="在内置浏览器里登录星火创作者中心，自动取到凭证并保存，不用再去浏览器复制 Cookie。&#x0a;第一次要用 TapTap 登录；之后 TapTap 登录还在就会自动登进去、自动关窗"/>
+                <Button DockPanel.Dock="Right" Content="忘记凭证" Command="{Binding Cmd_ForgetToken}"
+                        ToolTip="删掉本机加密保存的 token，之后要重新粘贴 Cookie（换账号、或这台电脑不再用时）。&#x0a;线上日志的本地缓存不在这里清，在「线上日志…」窗口里"/>
                 <CheckBox Content="记住凭证" IsChecked="{Binding RememberToken}" Margin="8 0 0 0" VerticalAlignment="Center"
                           ToolTip="解析成功后把 token 用 Windows 加密（DPAPI，只有本机当前账号解得开）存到 data\cloudtoken.bin，下次打开自动载入"/>
             </DockPanel>
@@ -51,18 +53,44 @@
                 <Button Content="删除所有区服存档" Command="{Binding Cmd_ClearAll}" Foreground="Firebrick" Margin="2 0 0 0"
                         ToolTip="清空全部分区存档 + 网关段（gsui_ 等其它 key 不动），游戏下次进入按新号建档"/>
             </UniformGrid>
+            <UniformGrid Columns="2" Margin="0 4 0 0">
+                <Button Content="查看全部玩家（当前环境）" Command="{Binding Cmd_ListPlayers}" Margin="0 0 2 0"
+                        ToolTip="读游戏的区服名册（虚拟账号 9999994 全量 / 9999995 在线），列出这个环境进过区的全部玩家；不用填 userId"/>
+                <Button Content="线上日志…" Command="{Binding Cmd_OpenOnlineLog}" Margin="2 0 0 0"
+                        ToolTip="开局记录与整局服务端日志、报错统计、自定义统计（星火后台开发者工具）；② 填了 userId 会带过去。编辑器调试的局不进后台"/>
+            </UniformGrid>
         </StackPanel>
 
-        <!-- 区服列表（结果与各段存档看右侧「存档」页） -->
+        <!-- 玩家列表 + 区服列表（结果与各段存档看右侧「存档」页） -->
         <Grid IsEnabled="{Binding IsIdle}">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="5"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="区服（查看概况后列出，点选一个区）" FontWeight="Bold" Margin="0 0 0 2"/>
-            <ListBox Grid.Row="1" ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}">
+            <TextBlock Text="玩家（查看全部玩家后列出，点一个 = 查看他的存档）" FontWeight="Bold" Margin="0 0 0 2"/>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Players}" SelectedItem="{Binding SelectedPlayer}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel ToolTip="{Binding ToolTip}">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding OnlineText}" Foreground="ForestGreen" Margin="6 0 0 0"/>
+                                <TextBlock Text="{Binding Title}" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                            <TextBlock Text="{Binding Info}" Foreground="Gray" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <GridSplitter Grid.Row="2" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
+
+            <TextBlock Grid.Row="3" Text="区服（查看概况后列出，点选一个区）" FontWeight="Bold" Margin="0 0 0 2"/>
+            <ListBox Grid.Row="4" ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <DockPanel>
@@ -73,7 +101,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <Button Grid.Row="2" Content="删除选中区全部数据" Command="{Binding Cmd_ClearServer}" Foreground="Firebrick" Margin="0 4 0 0"
+            <Button Grid.Row="5" Content="删除选中区全部数据" Command="{Binding Cmd_ClearServer}" Foreground="Firebrick" Margin="0 4 0 0"
                     ToolTip="清空列表里选中的那个区的全部分区存档，其它区和网关段不动"/>
         </Grid>
     </DockPanel>

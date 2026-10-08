@@ -1,0 +1,48 @@
+<Window x:Class="SpineViewer.Views.CloudCallHistoryDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:CloudSaveViewModel}"
+        mc:Ignorable="d"
+        Title="云存档 · 历史记录"
+        Background="{DynamicResource RegionBrush}"
+        Width="900"
+        Height="520"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 云存档页每次请求的记录（原先铺在右侧「存档」页里，挪成弹窗）。
+         非模态：开着也能继续在左侧操作，记录实时追加，最新的在最上面 -->
+    <DockPanel Margin="10">
+        <DockPanel DockPanel.Dock="Bottom" Margin="0 8 0 0">
+            <Button DockPanel.Dock="Right" Content="关闭" Width="100" Click="ButtonClose_Click" Margin="6 0 0 0"/>
+            <Button DockPanel.Dock="Right" Content="清空记录" Width="100" Command="{Binding Cmd_ClearCalls}"/>
+            <TextBlock Text="{Binding Calls.Count, StringFormat='共 {0} 条（最多保留 200 条，失败的标红）'}"
+                       Foreground="Gray" VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <DataGrid ItemsSource="{Binding Calls}" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" CanUserAddRows="False" SelectionMode="Single">
+            <DataGrid.Resources>
+                <!-- 失败的请求整行文字标红（只改单元格文字，不碰主题的行样式） -->
+                <Style x:Key="CallCellStyle" TargetType="TextBlock">
+                    <Setter Property="TextWrapping" Value="Wrap"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Ok}" Value="False">
+                            <Setter Property="Foreground" Value="Firebrick"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="时间" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Time}"/>
+                <DataGridTextColumn Header="操作" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Operation}"/>
+                <DataGridTextColumn Header="接口" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Api}"/>
+                <DataGridTextColumn Header="HTTP" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Http}"/>
+                <DataGridTextColumn Header="耗时" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Elapsed}"/>
+                <DataGridTextColumn Header="返回" ElementStyle="{StaticResource CallCellStyle}" Width="*" Binding="{Binding Result}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

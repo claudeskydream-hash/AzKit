@@ -6,12 +6,11 @@
              xmlns:vm="clr-namespace:SpineViewer.ViewModels"
              d:DataContext="{d:DesignInstance Type=vm:CloudSaveViewModel}"
              mc:Ignorable="d">
-    <!-- [AzureSail 新增] 右侧「存档」页：状态监测、结果与选中区的各段存档（操作在左侧栏「云存档」页） -->
+    <!-- [AzureSail 新增] 右侧「存档」页：状态、结果与选中区的各段存档（操作在左侧栏「云存档」页）。
+         每次请求的记录点「历史记录」弹窗看（CloudCallHistoryDialog） -->
     <Grid Margin="4">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="1*"/>
-            <RowDefinition Height="5"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="5"/>
@@ -21,9 +20,11 @@
             <RowDefinition Height="1.2*"/>
         </Grid.RowDefinitions>
 
-        <!-- 状态监测：当前在做什么 + 每次请求的返回 -->
-        <DockPanel Grid.Row="0" Margin="0 0 0 2">
-            <Button DockPanel.Dock="Right" Content="清空记录" Command="{Binding Cmd_ClearCalls}"/>
+        <!-- 状态：当前在做什么；每次请求的返回在「历史记录」弹窗里 -->
+        <DockPanel Grid.Row="0" Margin="0 0 0 6">
+            <Button DockPanel.Dock="Right" Command="{Binding Cmd_ShowCalls}" Margin="6 0 0 0"
+                    Content="{Binding Calls.Count}" ContentStringFormat="历史记录（{0}）"
+                    ToolTip="弹窗查看每次请求的时间、接口、HTTP 状态、耗时与返回（失败的标红）"/>
             <TextBlock Text="状态" FontWeight="Bold" VerticalAlignment="Center" Margin="0 0 8 0"/>
             <Border CornerRadius="3" Padding="6 2" VerticalAlignment="Center">
                 <Border.Style>
@@ -46,45 +47,22 @@
                            ToolTip="{Binding StatusText}"/>
             </Border>
         </DockPanel>
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Calls}" AutoGenerateColumns="False" IsReadOnly="True"
-                  HeadersVisibility="Column" CanUserAddRows="False" SelectionMode="Single">
-            <DataGrid.Resources>
-                <!-- 失败的请求整行文字标红（只改单元格文字，不碰主题的行样式） -->
-                <Style x:Key="CallCellStyle" TargetType="TextBlock">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Ok}" Value="False">
-                            <Setter Property="Foreground" Value="Firebrick"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.Resources>
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="时间" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Time}"/>
-                <DataGridTextColumn Header="操作" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Operation}"/>
-                <DataGridTextColumn Header="接口" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Api}"/>
-                <DataGridTextColumn Header="HTTP" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Http}"/>
-                <DataGridTextColumn Header="耗时" ElementStyle="{StaticResource CallCellStyle}" Width="Auto" Binding="{Binding Elapsed}"/>
-                <DataGridTextColumn Header="返回" ElementStyle="{StaticResource CallCellStyle}" Width="*" Binding="{Binding Result}"/>
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <GridSplitter Grid.Row="2" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
 
         <!-- 结果 -->
-        <DockPanel Grid.Row="3" Margin="0 2 0 2">
+        <DockPanel Grid.Row="1" Margin="0 2 0 2">
             <Button DockPanel.Dock="Right" Content="打开备份目录" Command="{Binding Cmd_OpenBackupFolder}"
                     ToolTip="删除前的备份（data\cloudbackup），格式同 EditCloudStore 快照，可用它的 update --file 恢复"/>
             <TextBlock Text="结果" FontWeight="Bold" VerticalAlignment="Center"/>
         </DockPanel>
-        <TextBox Grid.Row="4" Text="{Binding Output, Mode=OneWay}" IsReadOnly="True"
+        <TextBox Grid.Row="2" Text="{Binding Output, Mode=OneWay}" IsReadOnly="True"
                  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
 
-        <GridSplitter Grid.Row="5" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
+        <GridSplitter Grid.Row="3" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
 
         <!-- 选中区的存档段 -->
-        <TextBlock Grid.Row="6" FontWeight="Bold" Margin="0 2 0 2"
+        <TextBlock Grid.Row="4" FontWeight="Bold" Margin="0 2 0 2"
                    Text="{Binding SelectedServer.Title, StringFormat='选中区的存档段：{0}', FallbackValue='选中区的存档段（在左侧区服列表里点一个区）'}"/>
-        <DataGrid Grid.Row="7" ItemsSource="{Binding SelectedKeys}" SelectedItem="{Binding SelectedKey}"
+        <DataGrid Grid.Row="5" ItemsSource="{Binding SelectedKeys}" SelectedItem="{Binding SelectedKey}"
                   AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                   CanUserAddRows="False" SelectionMode="Single">
             <DataGrid.Columns>
@@ -94,10 +72,10 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <GridSplitter Grid.Row="8" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
+        <GridSplitter Grid.Row="6" ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
 
         <!-- 选中那段的完整内容 -->
-        <TextBox Grid.Row="9" Text="{Binding SelectedKeyValue, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"
+        <TextBox Grid.Row="7" Text="{Binding SelectedKeyValue, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"
                  TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                  VerticalContentAlignment="Top"/>
     </Grid>

@@ -94,14 +94,64 @@ namespace SpineViewer.Utils
         });
 
         /// <summary>
+        /// 通用表查询（线上日志用）：后台每个菜单页背后是一张表，请求形状相同，
+        /// 多出来的是时间段（毫秒时间戳）与搜索框。返回这一页的行与总条数。
+        /// <b>search_options 必须是数组</b>（哪怕只有一个条件），传成对象后台直接 500。
+        /// </summary>
+        public static async Task<(List<JsonObject> Rows, int Total)> QueryTableAsync(CloudAdminToken token, string tableId,
+            JsonArray searchOptions, DateTimeOffset begin, DateTimeOffset end, string searchKey, int page, int pageLimit)
+        {
+            JsonObject body = new()
+            {
+                ["firm"] = Firm,
+                ["table_id"] = tableId,
+                ["sort_key"] = null,
+                ["sort_type"] = null,
+                ["search_key"] = searchKey,
+                ["search_options"] = searchOptions,
+                ["begin_time"] = begin.ToUnixTimeMilliseconds(),
+                ["end_time"] = end.ToUnixTimeMilliseconds(),
+                ["page"] = page,
+                ["page_limit"] = pageLimit,
+            };
+
+            JsonNode root = await PostAsync(token, "api/v1/table/data", body);
+            JsonArray list = root["list"] as JsonArray ?? root["data"]?["list"] as JsonArray ?? [];
+            List<JsonObject> rows = [.. list.OfType<JsonObject>()];
+            int total = root["page_info"]?["total"] is JsonValue t && t.TryGetValue(out int n) ? n : rows.Count;
+            return (rows, total);
+        }
+
+        /// <summary>
+        /// 执行表格某一行上的操作按钮（如开局记录的「lua日志」= <c>lua_view_log</c>），返回后台弹窗里的文字。
+        /// 后台把结果放在 <c>dialog_box</c> 数组里（CodePanel 等），这里把各块的 value 拼起来；没有就返回 msg。
+        /// </summary>
+        public static async Task<string> RowActionAsync(CloudAdminToken token, string tableId, string rowId, string functor)
+        {
+            JsonNode root = await PostAsync(token, "api/v1/table/row", new JsonObject
+            {
+                ["firm"] = Firm,
+                ["table_id"] = tableId,
+                ["row_id"] = rowId,
+                ["functor"] = functor,
+                ["payload"] = new JsonObject(),
+            }, "查看");
+
+            if (root["dialog_box"] is JsonArray boxes && boxes.Count > 0)
+                return string.Join("\n", boxes.Select(b => b?["value"] is JsonValue v && v.TryGetValue(out string? s) ? s : b?["value"]?.ToJsonString() ?? ""));
+            return root["msg"]?.ToString() ?? "";
+        }
+
+        /// <summary>
         /// 每次请求结束（成功或失败）都报一次：接口、HTTP 状态、业务码、说明、耗时。界面的「状态监测」靠它。
         /// 在调用方的同步上下文里触发（WPF 界面线程发起的请求就回到界面线程）。
         /// </summary>
         public static event Action<CloudApiCall>? CallCompleted;
 
-        private static async Task<JsonNode> PostAsync(CloudAdminToken token, string path, JsonObject body)
+        /// <param name="api">状态监测里的接口名；不传按路径判（/data = 查询，其余 = 修改）</param>
+        private static async Task<JsonNode> PostAsync(CloudAdminToken token, string path, JsonObject body, string? api = null)
         {
-            string api = path.EndsWith("/data", StringComparison.Ordinal) ? "查询" : "修改";
+            api ??= path.EndsWith("/data", StringComparison.Ordinal) ? "查询" : "修改";
             Stopwatch watch = Stopwatch.StartNew();
             try
             {

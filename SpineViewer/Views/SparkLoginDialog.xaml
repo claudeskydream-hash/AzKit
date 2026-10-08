@@ -1,0 +1,21 @@
+<Window x:Class="SpineViewer.Views.SparkLoginDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="一键获取凭证 · 登录星火创作者中心"
+        Background="{DynamicResource RegionBrush}"
+        Width="1100"
+        Height="780"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 内置浏览器打开星火创作者中心，登录后自动读出后台 token Cookie 并关窗（逻辑见 code-behind）。
+         登录状态存在 AzKit 自己的浏览器数据目录（data\webview2），下次 TapTap 登录还在就会自动登进去 -->
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="8">
+            <Button DockPanel.Dock="Right" Content="取消" Width="90" Click="ButtonCancel_Click"/>
+            <TextBlock x:Name="statusText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Text="正在打开星火创作者中心……"/>
+        </DockPanel>
+        <wv2:WebView2 x:Name="web"/>
+    </DockPanel>
+</Window>

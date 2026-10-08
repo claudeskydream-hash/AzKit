@@ -19,6 +19,7 @@ namespace SpineViewer.ViewModels
     ///   ① 粘贴浏览器整段 Cookie → 解析出 token；勾「记住凭证」就加密存本机（CloudTokenStore），下次自动载入
     ///   ② 账号 userId + 环境（debug 编辑器 / test 测试 / formal 正式）
     ///   ③ 查看概况：按区服列出；删除所有区服存档；删除选中区
+    ///      查看全部玩家：读游戏的区服名册列出当前环境的玩家，点一个 = 填 userId 并查看概况（见 CloudPlayerRoster）
     /// </code>
     ///
     /// <b>删档 = 把值改成空字符串</b>（后台不让删普通 key），游戏服务端读到空值按新档重建。
@@ -26,7 +27,8 @@ namespace SpineViewer.ViewModels
     /// 删完重新查询核对。原先做在游戏 GM 面板里，星火沙箱不让游戏发 HTTP，所以挪到这里。
     ///
     /// 界面分两处：左侧栏「云存档」页放凭证、账号、操作与区服列表（CloudSavePanel）；
-    /// 右侧「存档」页放状态监测、结果与选中区的各段存档（CloudSaveDetailPanel）。一有操作就把右侧切到「存档」页。
+    /// 右侧「存档」页放状态、结果与选中区的各段存档（CloudSaveDetailPanel）。一有操作就把右侧切到「存档」页。
+    /// 每次请求的记录（Calls）点状态行上的「历史记录」弹窗看（CloudCallHistoryDialog，非模态）。
     /// </summary>
     public class CloudSaveViewModel : ObservableObject
     {
@@ -123,7 +125,7 @@ namespace SpineViewer.ViewModels
 
         // =============== ① 凭证 ===============
 
-        /// <summary>粘贴进来的 Cookie / token 原文；解析成功后清空，不留在屏幕上</summary>
+        /// <summary>粘贴进来的 Cookie / token 原文；解析成功（或启动载入记住的凭证）后换成 token 本身，让人看得到当前用的是哪个</summary>
         public string CookieText { get => _cookieText; set => SetProperty(ref _cookieText, value); }
         private string _cookieText = "";
 
@@ -149,10 +151,29 @@ namespace SpineViewer.ViewModels
         public RelayCommand Cmd_ParseToken => _cmd_ParseToken ??= new(ParseToken);
         private RelayCommand? _cmd_ParseToken;
 
+        /// <summary>一键获取：内置浏览器登录星火创作者中心，自动取到 token 后填进输入框并按「解析」同样处理（勾了记住就保存）</summary>
+        public RelayCommand Cmd_GetTokenOneClick => _cmd_GetTokenOneClick ??= new(() =>
+        {
+            if (DialogService.ShowSparkLoginDialog() is not { } token)
+            {
+                AddLocalRecord("一键获取凭证", false, "已取消，没拿到凭证");
+                return;
+            }
+            CookieText = token;
+            ParseToken();
+        });
+        private RelayCommand? _cmd_GetTokenOneClick;
+
         public RelayCommand Cmd_ForgetToken => _cmd_ForgetToken ??= new(() =>
         {
+            // 删了只能重新去浏览器复制 Cookie，先确认（原先叫「清除」不确认，被当成清缓存误点过）
+            if (!MessagePopupService.OKCancel("将删除本机记住的后台凭证（token），之后要重新粘贴浏览器 Cookie 才能用。\n\n"
+                    + "只是想清线上日志的本地缓存？那个在「线上日志…」窗口里。", "忘记凭证"))
+                return;
+
             CloudTokenStore.Delete();
             _token = null;
+            CookieText = "";
             TokenStatus = "未解析（已清除本机记住的凭证）";
             AddLocalRecord("清除凭证", true, "已删除本机加密保存的 token");
         });
@@ -169,7 +190,7 @@ namespace SpineViewer.ViewModels
             }
 
             _token = token;
-            CookieText = "";
+            CookieText = token.Token;
             if (RememberToken)
                 CloudTokenStore.Save(token.Token);
 
@@ -192,6 +213,7 @@ namespace SpineViewer.ViewModels
             }
 
             _token = token;
+            _cookieText = token.Token;
             ShowTokenStatus(token, "已载入本机记住的凭证");
             _logger.Info("[CloudSave] 已载入本机记住的凭证：后台账号 {0}，token {1}，到期 {2}", token.AccountName, token.Masked, token.ExpiresAt);
         }
@@ -222,6 +244,7 @@ namespace SpineViewer.ViewModels
                 OnPropertyChanged(nameof(IsDebug));
                 OnPropertyChanged(nameof(IsTest));
                 OnPropertyChanged(nameof(IsFormal));
+                Players.Clear();
                 Invalidate($"环境已切换为 {value}，请重新查询");
             }
         }
@@ -248,6 +271,31 @@ namespace SpineViewer.ViewModels
 
         public RelayCommand Cmd_ClearCalls => _cmd_ClearCalls ??= new(() => Calls.Clear());
         private RelayCommand? _cmd_ClearCalls;
+
+        // =============== 线上日志（OnlineLogViewModel 共用这里的凭证与请求记录） ===============
+
+        /// <summary>当前凭证；没解析为 null</summary>
+        internal CloudAdminToken? Token => _token;
+
+        /// <summary>别的窗口发请求前设一下，历史记录的「操作」列才对得上</summary>
+        internal void SetOperationLabel(string label) => _operation = label;
+
+        /// <summary>线上日志窗口的视图模型（窗口关了再开，查询条件和结果都还在）</summary>
+        public OnlineLogViewModel OnlineLog => _onlineLog ??= new(this);
+        private OnlineLogViewModel? _onlineLog;
+
+        /// <summary>打开线上日志窗口；② 填了 userId 就带过去</summary>
+        public RelayCommand Cmd_OpenOnlineLog => _cmd_OpenOnlineLog ??= new(() =>
+        {
+            if (long.TryParse(UserIdText.Trim(), out long userId) && userId > 0)
+                OnlineLog.SessionUserId = userId.ToString();
+            DialogService.ShowOnlineLog(OnlineLog);
+        });
+        private RelayCommand? _cmd_OpenOnlineLog;
+
+        /// <summary>弹出历史记录窗口（请求记录）</summary>
+        public RelayCommand Cmd_ShowCalls => _cmd_ShowCalls ??= new(() => DialogService.ShowCloudCallHistory(this));
+        private RelayCommand? _cmd_ShowCalls;
 
         private void BeginOperation(string label)
         {
@@ -360,6 +408,64 @@ namespace SpineViewer.ViewModels
             Process.Start(new ProcessStartInfo(BackupDirectory) { UseShellExecute = true });
         });
         private RelayCommand? _cmd_OpenBackupFolder;
+
+        // =============== 全部玩家 ===============
+
+        /// <summary>玩家列表的一行</summary>
+        public sealed class PlayerRow(CloudPlayerRoster.Player player)
+        {
+            public CloudPlayerRoster.Player Player { get; } = player;
+
+            public long UserId => Player.UserId;
+
+            public string Title => Player.Nickname.Length > 0 ? Player.Nickname : "（无昵称）";
+
+            public string Info => $"{Player.UserId} · {string.Join(",", Player.Servers)} 区 · 最后登录 {CloudPlayerRoster.FormatTime(Player.LastLoginTime)}";
+
+            public bool IsOnline => Player.IsOnline;
+
+            public string OnlineText => Player.IsOnline ? $"● 在线 {string.Join(",", Player.OnlineServers)} 区" : "";
+
+            public string ToolTip => $"userId {Player.UserId}\n昵称 {Title}\n进过的区 {string.Join(",", Player.Servers)}\n"
+                + $"首次进区 {CloudPlayerRoster.FormatTime(Player.CreateTime)}\n最后登录 {CloudPlayerRoster.FormatTime(Player.LastLoginTime)}"
+                + (Player.IsOnline ? $"\n当前在线 {string.Join(",", Player.OnlineServers)} 区" : "");
+        }
+
+        /// <summary>当前环境的全部玩家（点「查看全部玩家」后列出）；换环境就清空</summary>
+        public ObservableCollection<PlayerRow> Players { get; } = [];
+
+        /// <summary>点选一个玩家 = 把 userId 填进 ② 并查看他的存档概况</summary>
+        public PlayerRow? SelectedPlayer
+        {
+            get => _selectedPlayer;
+            set
+            {
+                if (!SetProperty(ref _selectedPlayer, value) || value is null || !IsIdle) return;
+                UserIdText = value.UserId.ToString();
+                Cmd_Query.Execute(null);
+            }
+        }
+        private PlayerRow? _selectedPlayer;
+
+        public AsyncRelayCommand Cmd_ListPlayers => _cmd_ListPlayers ??= new(() => RunAsync("查看全部玩家", ListPlayersAsync, needUser: false));
+        private AsyncRelayCommand? _cmd_ListPlayers;
+
+        /// <summary>查两张区服名册，汇总成玩家列表（后台查询必须带 user_id，没法直接列全表，见 CloudPlayerRoster）</summary>
+        private async Task<(bool Ok, string Summary)> ListPlayersAsync(CloudAdminToken token, long _)
+        {
+            UpdateOperation("读全量名册");
+            List<CloudSaveRow> roster = await CloudAdminApi.QueryAsync(token, CloudPlayerRoster.ServerRosterUserId, Env);
+            UpdateOperation("读在线名册");
+            List<CloudSaveRow> online = await CloudAdminApi.QueryAsync(token, CloudPlayerRoster.OnlineRosterUserId, Env);
+
+            CloudPlayerRoster result = CloudPlayerRoster.Build(Env, roster, online, DateTimeOffset.Now);
+            Players.Clear();
+            foreach (CloudPlayerRoster.Player player in result.Players)
+                Players.Add(new PlayerRow(player));
+
+            Output = result.Describe();
+            return (true, $"共 {result.Players.Count} 个玩家，在线 {result.Players.Count(p => p.IsOnline)} 个");
+        }
 
         /// <summary>查询并刷新列表，返回给状态栏的成败与一句话</summary>
         private async Task<(bool Ok, string Summary)> QueryAsync(CloudAdminToken token, long userId)
@@ -492,7 +598,8 @@ namespace SpineViewer.ViewModels
         /// 跑一个要访问后台的动作：先检查凭证与账号，期间锁住界面、状态栏显示进行中，
         /// 结束后状态栏给出成败与一句话，异常转成结果里的一句话。
         /// </summary>
-        private async Task RunAsync(string label, Func<CloudAdminToken, long, Task<(bool Ok, string Summary)>> action)
+        /// <param name="needUser">要不要 ② 填好的 userId（查全部玩家不要）</param>
+        private async Task RunAsync(string label, Func<CloudAdminToken, long, Task<(bool Ok, string Summary)>> action, bool needUser = true)
         {
             ShowDetailTab();
 
@@ -510,16 +617,18 @@ namespace SpineViewer.ViewModels
                 return;
             }
 
-            if (!long.TryParse(UserIdText.Trim(), out long userId) || userId <= 0)
+            long userId = 0;
+            if (needUser && (!long.TryParse(UserIdText.Trim(), out userId) || userId <= 0))
             {
                 Output = "账号 userId 要填数字（编辑器默认账号是 100）。";
                 AddLocalRecord(label, false, "userId 不是数字");
                 return;
             }
 
+            string target = needUser ? $"账号 {userId}，{Env}" : Env;
             IsIdle = false;
-            BeginOperation($"{label}（账号 {userId}，{Env}）");
-            Output = $"请求后台中……（账号 {userId}，{Env}）";
+            BeginOperation($"{label}（{target}）");
+            Output = $"请求后台中……（{target}）";
             try
             {
                 (bool ok, string summary) = await action(_token, userId);
