@@ -283,9 +283,6 @@ public partial class MainWindow : Window
             _localAssetsGrid.RowDefinitions[0].Height = new(m.LocalAssetsGridRow0Height, GridUnitType.Star);
             _localAssetsGrid.RowDefinitions[2].Height = new(m.LocalAssetsGridRow2Height, GridUnitType.Star);
 
-            _gitHubAssetsGrid.RowDefinitions[0].Height = new(m.GitHubAssetsGridRow0Height, GridUnitType.Star);
-            _gitHubAssetsGrid.RowDefinitions[2].Height = new(m.GitHubAssetsGridRow2Height, GridUnitType.Star);
-
             _rightPanelGrid.RowDefinitions[0].Height = new(m.RightPanelGridRow0Height, GridUnitType.Star);
             _rightPanelGrid.RowDefinitions[2].Height = new(m.RightPanelGridRow2Height, GridUnitType.Star);
 
@@ -317,9 +314,6 @@ public partial class MainWindow : Window
 
             LocalAssetsGridRow0Height = _localAssetsGrid.RowDefinitions[0].Height.Value,
             LocalAssetsGridRow2Height = _localAssetsGrid.RowDefinitions[2].Height.Value,
-
-            GitHubAssetsGridRow0Height = _gitHubAssetsGrid.RowDefinitions[0].Height.Value,
-            GitHubAssetsGridRow2Height = _gitHubAssetsGrid.RowDefinitions[2].Height.Value,
 
             RightPanelGridRow0Height = _rightPanelGrid.RowDefinitions[0].Height.Value,
             RightPanelGridRow2Height = _rightPanelGrid.RowDefinitions[2].Height.Value,
@@ -410,28 +404,6 @@ public partial class MainWindow : Window
             default:
                 break;
         }
-    }
-
-    #endregion
-
-    #region ColorPicker 弹窗事件处理
-
-    private void ButtonPickColor_Click(object sender, RoutedEventArgs e)
-    {
-        _colorPopup.IsOpen = !_colorPopup.IsOpen;
-    }
-
-    private void ColorPicker_Confirmed(object sender, HandyControl.Data.FunctionEventArgs<Color> e)
-    {
-        _colorPopup.IsOpen = false;
-        var color = e.Info;
-        var vm = ((MainWindowViewModel)DataContext).SFMLRendererViewModel;
-        vm.BackgroundColor = color;
-    }
-
-    private void ColorPicker_Canceled(object sender, EventArgs e)
-    {
-        _colorPopup.IsOpen = false;
     }
 
     #endregion
