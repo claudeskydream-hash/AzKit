@@ -976,7 +976,7 @@ public partial class MainWindow : Window
     {
 #if DEBUG
         var c = GitHubService.GetClient();
-        var r = await c.Repository.Get("ww-rm", "SpineViewer");
+        var r = await c.Repository.Get(App.GithubOwner, App.GithubRepo);
 
 
 #endif

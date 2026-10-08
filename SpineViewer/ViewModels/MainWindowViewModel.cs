@@ -194,7 +194,7 @@ namespace SpineViewer.ViewModels
         /// <summary>
         /// 打开 Wiki 页面
         /// </summary>
-        public RelayCommand Cmd_GotoWiki => _cmd_GotoWiki ??= new(() => Process.Start(new ProcessStartInfo("https://github.com/ww-rm/SpineViewer/wiki") { UseShellExecute = true }));
+        public RelayCommand Cmd_GotoWiki => _cmd_GotoWiki ??= new(() => Process.Start(new ProcessStartInfo($"https://github.com/{App.GithubOwner}/{App.GithubRepo}#readme") { UseShellExecute = true }));
         private RelayCommand? _cmd_GotoWiki;
 
         /// <summary>
