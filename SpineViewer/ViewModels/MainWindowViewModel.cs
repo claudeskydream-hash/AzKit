@@ -270,6 +270,15 @@ namespace SpineViewer.ViewModels
         public CloudSaveViewModel CloudSaveViewModel => _cloudSaveViewModel ??= new(this);
         private CloudSaveViewModel? _cloudSaveViewModel;
 
+        /// <summary>
+        /// [AzureSail 新增] 记事本：左侧栏文件夹树 + 右侧「笔记」编辑区
+        /// </summary>
+        public NotepadViewModel NotepadViewModel => _notepadViewModel ??= new();
+        private NotepadViewModel? _notepadViewModel;
+
+        /// <summary>[AzureSail 新增] 退出前把记事本里改过的页签存掉（没打开过记事本就什么都不做）</summary>
+        public void SaveNotepad() => _notepadViewModel?.SaveAll();
+
         public WorkspaceModel Workspace
         {
             get

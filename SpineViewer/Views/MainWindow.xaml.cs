@@ -237,6 +237,9 @@ public partial class MainWindow : Window
         RemoveUserStateListensers();
         SaveUserState();
 
+        // [AzureSail 新增] 记事本没存的改动随退出一起存
+        _vm.SaveNotepad();
+
         _vm.SFMLRendererViewModel.StopRender();
     }
 
@@ -453,6 +456,30 @@ public partial class MainWindow : Window
     #endregion
 
     #region _mainTabControl 事件处理
+
+    /// <summary>
+    /// [AzureSail 新增] 左侧栏换页：进记事本 → 右侧切到「笔记」编辑区；离开记事本 → 自动保存，
+    /// 右侧还停在「笔记」就切回模型动画。按"选中哪页"判断而不是看面板可见性，折叠左栏腾宽度写字时不会被踢出编辑区。
+    /// </summary>
+    private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // 页里面的列表、子页签的 SelectionChanged 也会冒泡上来，只认左侧栏自己的
+        if (e.Source != _mainTabControl)
+            return;
+
+        if (e.RemovedItems.Contains(_notepadTabItem))
+        {
+            _vm.SaveNotepad();
+            if (_vm.ViewTabIndex == NotepadViewModel.EditorTabIndex)
+                _vm.ViewTabIndex = 0;
+        }
+
+        if (e.AddedItems.Contains(_notepadTabItem))
+        {
+            _vm.ViewTabIndex = NotepadViewModel.EditorTabIndex;
+            _notepadEditor.FocusEditor();
+        }
+    }
 
     private void MainTabControlHeader_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {

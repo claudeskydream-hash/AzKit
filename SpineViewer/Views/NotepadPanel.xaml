@@ -1,0 +1,78 @@
+<UserControl x:Class="SpineViewer.Views.NotepadPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SpineViewer.ViewModels">
+
+    <!-- [AzureSail 新增] 左侧栏「记事本」页：文件夹树（编辑区在右侧「笔记」页签，见 NotepadEditorPanel）。DataContext = NotepadViewModel -->
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding Cmd_Save}"/>
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding Cmd_NewNote}"/>
+    </UserControl.InputBindings>
+
+    <DockPanel Margin="4">
+        <!-- 顶部按钮 -->
+        <DockPanel DockPanel.Dock="Top" Margin="0 0 0 4">
+            <Button DockPanel.Dock="Left" Content="新建笔记" ToolTip="在选中的文件夹里新建 md（Ctrl+N）；没选就放「AzKit 笔记」" Command="{Binding Cmd_NewNote}" Margin="0 0 4 0"/>
+            <Button DockPanel.Dock="Left" Content="添加文件夹..." ToolTip="把一个文件夹挂到下面，展开就能看到里面的 md / txt / json" Command="{Binding Cmd_AddFolder}" Margin="0 0 4 0"/>
+            <Button DockPanel.Dock="Right" Content="刷新" ToolTip="重新扫描展开着的文件夹（外面增删了文件时用）" Command="{Binding Cmd_RefreshAll}"/>
+            <TextBlock/>
+        </DockPanel>
+
+        <!-- 文件夹树：点文件在右侧打开；右击会先选中那一项，菜单作用于它 -->
+        <TreeView ItemsSource="{Binding Folders}"
+                  PreviewMouseRightButtonDown="Tree_PreviewMouseRightButtonDown">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                    <Setter Property="ToolTip" Value="{Binding Path}"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
+
+            <TreeView.Resources>
+                <!-- 文件夹 -->
+                <HierarchicalDataTemplate DataType="{x:Type vm:NoteFolderNode}" ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding Header}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRoot}" Value="True">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                        <TextBlock.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="在这里新建笔记" Command="{Binding Cmd_NewNote}"/>
+                                <MenuItem Header="刷新" Command="{Binding Cmd_Refresh}"/>
+                                <MenuItem Header="在资源管理器中显示" Command="{Binding Cmd_ShowInExplorer}"/>
+                                <Separator/>
+                                <MenuItem Header="从记事本移除（不删文件）" Command="{Binding Cmd_Remove}"/>
+                            </ContextMenu>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+                </HierarchicalDataTemplate>
+
+                <!-- 文件 -->
+                <DataTemplate DataType="{x:Type vm:NoteFileNode}">
+                    <TextBlock Text="{Binding Header}">
+                        <TextBlock.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="保存" InputGestureText="Ctrl+S" Command="{Binding Cmd_Save}"/>
+                                <MenuItem Header="另存为..." Command="{Binding Cmd_SaveAs}"/>
+                                <MenuItem Header="重命名..." Command="{Binding Cmd_Rename}"/>
+                                <Separator/>
+                                <MenuItem Header="在资源管理器中显示" Command="{Binding Cmd_ShowInExplorer}"/>
+                            </ContextMenu>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+                </DataTemplate>
+
+                <!-- 没展开前的占位 -->
+                <DataTemplate DataType="{x:Type vm:NoteLoadingNode}">
+                    <TextBlock Text="{Binding Header}" Foreground="Gray"/>
+                </DataTemplate>
+            </TreeView.Resources>
+        </TreeView>
+    </DockPanel>
+</UserControl>

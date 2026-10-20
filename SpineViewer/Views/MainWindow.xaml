@@ -107,7 +107,7 @@
                     <Border Grid.Column="0" x:Name="_mainTabControlContainer">
 
                         <!-- 功能页 -->
-                        <TabControl x:Name="_mainTabControl" TabStripPlacement="Left">
+                        <TabControl x:Name="_mainTabControl" TabStripPlacement="Left" SelectionChanged="MainTabControl_SelectionChanged">
 
                             <!-- 模型列表页 -->
                             <TabItem>
@@ -1172,6 +1172,20 @@
                                 <views:CloudSavePanel/>
                             </TabItem>
 
+                            <!-- [AzureSail 新增] 记事本：这里是文件夹树（md / txt / json），编辑区在右侧「笔记」页签；Ctrl+S 保存，切走本页 / 退出时自动保存 -->
+                            <TabItem x:Name="_notepadTabItem" DataContext="{Binding NotepadViewModel}">
+                                <TabItem.Header>
+                                    <Border Style="{StaticResource MyTabItemHeaderContainerStyle}"
+                                            MouseLeftButtonDown="MainTabControlHeader_MouseLeftButtonDown"
+                                            ToolTip="记事本（文件夹里的 md / txt / json，点开在右侧编辑）">
+                                        <Viewbox Width="24" Height="24">
+                                            <Path Data="{StaticResource Geo_NoteSticky}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                        </Viewbox>
+                                    </Border>
+                                </TabItem.Header>
+                                <views:NotepadPanel/>
+                            </TabItem>
+
                             <!-- [AzKit] 上游「GitHub 资源」页（从 GitHub 仓库在线下载素材）已从左侧栏移除：AzureSail 用不到，去掉后启动也不再请求 GitHub -->
 
                         </TabControl>
@@ -1278,6 +1292,21 @@
                                         </Border>
                                     </TabItem.Header>
                                     <views:CloudSaveDetailPanel/>
+                                </TabItem>
+
+                                <!-- [AzureSail 新增] 笔记标签页：左侧栏「记事本」页的编辑区（序号 3，NotepadViewModel.EditorTabIndex），选中记事本页时自动切过来 -->
+                                <TabItem DataContext="{Binding NotepadViewModel}">
+                                    <TabItem.Header>
+                                        <Border Style="{StaticResource MyTabItemHeaderContainerStyle}" ToolTip="记事本的编辑区">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                                <Viewbox Width="24" Height="24">
+                                                    <Path Data="{StaticResource Geo_NoteSticky}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                                </Viewbox>
+                                                <TextBlock Text="笔记"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </TabItem.Header>
+                                    <views:NotepadEditorPanel x:Name="_notepadEditor"/>
                                 </TabItem>
 
                             </TabControl>
