@@ -5,6 +5,7 @@ using SpineViewer.Services;
 using SpineViewer.Utils;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Windows;
@@ -20,10 +21,11 @@ namespace SpineViewer.ViewModels
     ///             行操作 lua_view_log = 这一局<b>完整的服务端日志</b>（Game.Logger 打的全部，同局所有玩家都在里面）
     ///   报错统计  firm0_app_query_server_log / firm0_app_query_client_log  按内容聚合的报错 + 次数
     ///   自定义统计 firm0_app_event_detail          游戏主动上报的事件（按环境 / 事件名 / userId）
+    ///   玩家上传日志 firm0_app_log_download        玩家在游戏里点「上传日志」的整包客户端日志（OSS 上的 zip），下载解压到 data/playerlogs
     /// </code>
     ///
-    /// 实测（2026-10-08）：编辑器调试（debug）开的局<b>不进</b>开局记录，只有 test（内测）/ formal（正式）有；
-    /// 「开发日志」「使发送日志」要发布正式版后才可用（后台报"尚未发布正式版本"），所以没接。
+    /// 实测（2026-10-08）：编辑器调试（debug）开的局<b>不进</b>开局记录，只有 test（内测）/ formal（正式）有。
+    /// 「开发日志」2026-10-09 实测已能查（内测环境），即玩家上传日志；「使发送日志」仍没接。
     /// 表与字段是从后台 /api/v1/layout 读出来的页面结构，后台改版时以那里为准。
     /// </summary>
     public class OnlineLogViewModel : ObservableObject
@@ -577,5 +579,185 @@ namespace SpineViewer.ViewModels
                 return total == 0 ? $"最近 {days} 天没有事件（游戏要先用星火的自定义统计接口上报）" : $"共 {total} 条";
             });
         }
+
+        // =============== ④ 玩家上传日志（开发日志） ===============
+
+        /// <summary>
+        /// 玩家在游戏里点「上传日志」后的一份日志包。后台只给一个 OSS 地址（不带协议头），
+        /// 包里是那台设备的<b>完整客户端日志</b>：client/（游戏 C# 日志，含完整异常栈）、game/（引擎，含 Shader 缺变体）、
+        /// lua/、Network/、downloader/……比服务端日志里转发的那几行全得多，手机特有的问题靠它查。
+        /// </summary>
+        public sealed class PlayerLogRow(JsonObject row) : ObservableObject
+        {
+            public string RowId { get; } = Str(row, "row_id");
+            public string Time { get; } = Str(row, "time");
+            public string Env { get; } = Str(row, "env");
+            public string UserId { get; } = Str(row, "user_id");
+            public string Url { get; } = Str(row, "url");
+
+            /// <summary>本地目录名：上传时间_userId_行号（时间在前，按名字排序就是按时间排）</summary>
+            public string FolderName => $"{Time.Replace(':', '-').Replace(' ', '_')}_{UserId}_{RowId}";
+
+            public string LocalPath => Path.Combine(PlayerLogDirectory, FolderName);
+
+            public bool IsDownloaded { get => _isDownloaded; set { if (SetProperty(ref _isDownloaded, value)) OnPropertyChanged(nameof(DownloadedMark)); } }
+            private bool _isDownloaded;
+
+            public string DownloadedMark => IsDownloaded ? "✓" : "";
+
+            public void RefreshDownloaded() => IsDownloaded = Directory.Exists(LocalPath);
+        }
+
+        /// <summary>玩家上传日志的本地目录：每份一个子目录（解压后的内容），原始 zip 不留</summary>
+        public static readonly string PlayerLogDirectory = Path.Combine(App.DataDirectory, "playerlogs");
+
+        private const string PlayerLogTable = "firm0_app_log_download";
+
+        /// <summary>环境筛选：后台的取值就是这两个中文名，空 = 全部</summary>
+        public string[] PlayerLogEnvOptions { get; } = ["全部", "星火对战平台内测环境", "正式环境"];
+
+        public string PlayerLogEnv { get => _playerLogEnv; set => SetProperty(ref _playerLogEnv, value); }
+        private string _playerLogEnv = "全部";
+
+        public string PlayerLogUserId { get => _playerLogUserId; set => SetProperty(ref _playerLogUserId, value); }
+        private string _playerLogUserId = "";
+
+        public ObservableCollection<PlayerLogRow> PlayerLogs { get; } = [];
+
+        public PageState PlayerLogPage { get; } = new();
+
+        public PlayerLogRow? SelectedPlayerLog { get => _selectedPlayerLog; set => SetProperty(ref _selectedPlayerLog, value); }
+        private PlayerLogRow? _selectedPlayerLog;
+
+        public AsyncRelayCommand Cmd_QueryPlayerLogs => _cmd_QueryPlayerLogs ??= new(() => QueryPlayerLogsAsync(1));
+        private AsyncRelayCommand? _cmd_QueryPlayerLogs;
+
+        public AsyncRelayCommand Cmd_PlayerLogPrev => _cmd_PlayerLogPrev ??= new(() => QueryPlayerLogsAsync(PlayerLogPage.Page - 1));
+        private AsyncRelayCommand? _cmd_PlayerLogPrev;
+
+        public AsyncRelayCommand Cmd_PlayerLogNext => _cmd_PlayerLogNext ??= new(() => QueryPlayerLogsAsync(PlayerLogPage.Page + 1));
+        private AsyncRelayCommand? _cmd_PlayerLogNext;
+
+        private (string Env, string UserId, int Days) _playerLogQuery;
+
+        private Task QueryPlayerLogsAsync(int page)
+        {
+            if (page == 1)
+            {
+                string userId = PlayerLogUserId.Trim();
+                if (userId.Length > 0 && !long.TryParse(userId, out _))
+                {
+                    StatusText = "✗ userId 要填数字，留空 = 全部玩家。";
+                    return Task.CompletedTask;
+                }
+                _playerLogQuery = (PlayerLogEnv, userId, Days);
+            }
+            else if (page < 1 || page > PlayerLogPage.PageCount)
+            {
+                return Task.CompletedTask;
+            }
+
+            (string env, string user, int days) = _playerLogQuery;
+            return RunAsync("查玩家上传日志", async token =>
+            {
+                JsonArray options = [];
+                if (env != "全部") options.Add(Filter("env", env));
+                if (user.Length > 0) options.Add(Filter("user_id", user));
+                DateTimeOffset end = DateTimeOffset.Now;
+                (List<JsonObject> rows, int total) = await CloudAdminApi.QueryTableAsync(token, PlayerLogTable, options, end.AddDays(-days), end, "", page, PageSize);
+
+                PlayerLogs.Clear();
+                foreach (JsonObject row in rows)
+                {
+                    PlayerLogRow item = new(row);
+                    item.RefreshDownloaded();
+                    PlayerLogs.Add(item);
+                }
+                PlayerLogPage.Page = page;
+                PlayerLogPage.Total = total;
+                return total == 0 ? $"最近 {days} 天没有玩家上传日志" : $"共 {total} 份，选一份点「下载」";
+            });
+        }
+
+        /// <summary>下载选中的日志包并解压到本地目录；已经下过就直接打开</summary>
+        public AsyncRelayCommand Cmd_DownloadPlayerLog => _cmd_DownloadPlayerLog ??= new(async () =>
+        {
+            PlayerLogRow? item = SelectedPlayerLog;
+            if (item is null)
+            {
+                StatusText = "先在列表里选一份日志。";
+                return;
+            }
+
+            item.RefreshDownloaded();
+            if (item.IsDownloaded)
+            {
+                OpenFolder(item.LocalPath);
+                StatusText = "✓ 已经下载过，直接打开了本地目录（要重下先点「删除本地」）";
+                return;
+            }
+            if (item.Url.Length == 0)
+            {
+                StatusText = "✗ 这一行后台没给下载地址。";
+                return;
+            }
+
+            IsIdle = false;
+            StatusText = $"● 下载 {item.Time} {item.UserId} 的日志包……";
+            string tempZip = Path.Combine(Path.GetTempPath(), "azkit_playerlog_" + item.RowId + ".zip");
+            try
+            {
+                string url = item.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? item.Url : "https://" + item.Url;
+                byte[] data = await PlayerLogHttp.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(tempZip, data);
+
+                // 先解到临时目录再改名，半路失败不会留下一个看着像下完了的目录
+                string partial = item.LocalPath + ".partial";
+                if (Directory.Exists(partial)) Directory.Delete(partial, true);
+                System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, partial);
+                Directory.Move(partial, item.LocalPath);
+
+                item.RefreshDownloaded();
+                _logger.Info("[OnlineLog] 玩家日志已下载 {0}（{1} KB）", item.LocalPath, data.Length / 1024);
+                OpenFolder(item.LocalPath);
+                StatusText = $"✓ 已下载并解压（{data.Length / 1024f / 1024f:0.0} MB）→ {item.LocalPath}；游戏日志在 client\\，引擎（含 Shader 缺变体）在 game\\";
+            }
+            catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or InvalidDataException)
+            {
+                _logger.Warn("[OnlineLog] 玩家日志下载失败：{0}", e.Message);
+                StatusText = "✗ 下载失败：" + e.Message;
+            }
+            finally
+            {
+                if (File.Exists(tempZip)) File.Delete(tempZip);
+                IsIdle = true;
+            }
+        });
+        private AsyncRelayCommand? _cmd_DownloadPlayerLog;
+
+        /// <summary>删掉选中这份的本地目录（想重新下载时用）</summary>
+        public RelayCommand Cmd_DeletePlayerLog => _cmd_DeletePlayerLog ??= new(() =>
+        {
+            PlayerLogRow? item = SelectedPlayerLog;
+            if (item is null || !Directory.Exists(item.LocalPath)) return;
+            if (!MessagePopupService.OKCancel($"删除本地目录 {item.LocalPath}？", "删除本地日志")) return;
+            Directory.Delete(item.LocalPath, true);
+            item.RefreshDownloaded();
+            StatusText = "✓ 已删除本地目录，再点「下载」会重新从后台下";
+        });
+        private RelayCommand? _cmd_DeletePlayerLog;
+
+        public RelayCommand Cmd_OpenPlayerLogFolder => _cmd_OpenPlayerLogFolder ??= new(() =>
+        {
+            Directory.CreateDirectory(PlayerLogDirectory);
+            OpenFolder(PlayerLogDirectory);
+        });
+        private RelayCommand? _cmd_OpenPlayerLogFolder;
+
+        /// <summary>日志包放在公开的 OSS 上，不需要后台凭证；包可能有十几 MB，超时放宽</summary>
+        private static readonly HttpClient PlayerLogHttp = new() { Timeout = TimeSpan.FromMinutes(5) };
+
+        private static void OpenFolder(string path) =>
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
     }
 }

@@ -71,12 +71,13 @@
                     <!-- [AzureSail 新增] 项目快捷入口 -->
                     <MenuItem Header="AZ">
                         <MenuItem Header="导表" Command="{Binding Cmd_RunAzureSailGenTable}"/>
+                        <!-- 编译 Client-Resource 写 ref/objref.txt，再核对表里的资源全进了发布清单 -->
+                        <MenuItem Header="统计资源（发版前跑，含表资源检查）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="生成资源统计ref.bat"/>
                         <Separator/>
                         <MenuItem Header="编译两端并拷 DLL（BuildAndCopy）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="BuildAndCopy.bat"/>
                         <MenuItem Header="客户端竖屏调试（Debug-Client）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="Debug-Client.bat"/>
                         <Separator/>
                         <MenuItem Header="FGUI 发布后分发资源（sync-fgui-atlas）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="sync-fgui-atlas.bat"/>
-                        <MenuItem Header="生成资源统计 ref" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="生成资源统计ref.bat"/>
                         <MenuItem Header="生成地形 MIX（只补缺的）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="生成地形MIX.bat"/>
                         <Separator/>
                         <MenuItem Header="诊断编辑器缓存（只诊断不删）" Command="{Binding Cmd_RunAzureSailBat}" CommandParameter="清理编辑器缓存.bat"/>
