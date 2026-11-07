@@ -59,6 +59,8 @@
                 <Button Content="线上日志…" Command="{Binding Cmd_OpenOnlineLog}" Margin="2 0 0 0"
                         ToolTip="开局记录与整局服务端日志、报错统计、自定义统计（星火后台开发者工具）；② 填了 userId 会带过去。编辑器调试的局不进后台"/>
             </UniformGrid>
+            <Button Content="开服设置（游戏上线时间）…" Command="{Binding Cmd_OpenServerOpen}" Margin="0 4 0 0"
+                    ToolTip="读 / 设当前环境的游戏上线时间（上线前所有区都显示服务器未开启）与各区开服记录；不用填 userId"/>
         </StackPanel>
 
         <!-- 玩家列表 + 区服列表（结果与各段存档看右侧「存档」页） -->

@@ -1186,6 +1186,20 @@
                                 <views:NotepadPanel/>
                             </TabItem>
 
+                            <!-- [AzureSail 新增] 邮件：这里写信（标题 / 正文 / 目标 / 附件），待发箱与撤回在右侧「邮件」页签；凭证与环境用云存档页的 -->
+                            <TabItem x:Name="_mailTabItem" DataContext="{Binding CloudSaveViewModel.Mail}">
+                                <TabItem.Header>
+                                    <Border Style="{StaticResource MyTabItemHeaderContainerStyle}"
+                                            MouseLeftButtonDown="MainTabControlHeader_MouseLeftButtonDown"
+                                            ToolTip="邮件（往游戏邮件待发箱发信 / 撤回，附件从物品表挑）">
+                                        <Viewbox Width="24" Height="24">
+                                            <Path Data="{StaticResource Geo_Envelope}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                        </Viewbox>
+                                    </Border>
+                                </TabItem.Header>
+                                <views:MailPanel/>
+                            </TabItem>
+
                             <!-- [AzKit] 上游「GitHub 资源」页（从 GitHub 仓库在线下载素材）已从左侧栏移除：AzureSail 用不到，去掉后启动也不再请求 GitHub -->
 
                         </TabControl>
@@ -1307,6 +1321,20 @@
                                         </Border>
                                     </TabItem.Header>
                                     <views:NotepadEditorPanel x:Name="_notepadEditor"/>
+                                </TabItem>
+                                <!-- [AzureSail 新增] 邮件标签页：左侧栏「邮件」页的待发箱与详情（序号 4，MailViewModel.OutboxTabIndex），选中邮件页时自动切过来 -->
+                                <TabItem DataContext="{Binding CloudSaveViewModel.Mail}">
+                                    <TabItem.Header>
+                                        <Border Style="{StaticResource MyTabItemHeaderContainerStyle}" ToolTip="游戏邮件待发箱">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                                <Viewbox Width="24" Height="24">
+                                                    <Path Data="{StaticResource Geo_Envelope}" Style="{StaticResource MyTabItemHeaderPathStyle}"/>
+                                                </Viewbox>
+                                                <TextBlock Text="邮件"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </TabItem.Header>
+                                    <views:MailOutboxPanel/>
                                 </TabItem>
 
                             </TabControl>

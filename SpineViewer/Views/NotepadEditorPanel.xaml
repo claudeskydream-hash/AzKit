@@ -13,7 +13,7 @@
         <!-- 标题条：当前文件名（改过带 *）+ 完整路径 -->
         <DockPanel DockPanel.Dock="Top" Margin="8 4">
             <TextBlock DockPanel.Dock="Right" Foreground="Gray" VerticalAlignment="Center"
-                       Text="Ctrl+S 保存 · Ctrl+Z 撤销 · Ctrl+Y 重做"/>
+                       Text="Ctrl+S 保存 · Ctrl+F 查找 · Ctrl+Z 撤销 · Ctrl+Y 重做"/>
             <TextBlock DockPanel.Dock="Left" Text="{Binding SelectedDocument.Header}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
             <TextBlock Text="{Binding SelectedDocument.FilePath}" Foreground="Gray" Margin="10 0" VerticalAlignment="Center"
                        ToolTip="{Binding SelectedDocument.FilePath}" TextTrimming="CharacterEllipsis"/>

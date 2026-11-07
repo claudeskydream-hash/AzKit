@@ -479,6 +479,13 @@ public partial class MainWindow : Window
             _vm.ViewTabIndex = NotepadViewModel.EditorTabIndex;
             _notepadEditor.FocusEditor();
         }
+
+        // [AzureSail 新增] 邮件页：左边写信，右边自动切到「邮件」页签看待发箱；离开时切回预览
+        if (e.RemovedItems.Contains(_mailTabItem) && _vm.ViewTabIndex == MailViewModel.OutboxTabIndex)
+            _vm.ViewTabIndex = 0;
+
+        if (e.AddedItems.Contains(_mailTabItem))
+            _vm.ViewTabIndex = MailViewModel.OutboxTabIndex;
     }
 
     private void MainTabControlHeader_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

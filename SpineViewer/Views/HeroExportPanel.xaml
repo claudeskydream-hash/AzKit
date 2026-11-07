@@ -10,7 +10,7 @@
     <!-- [AzureSail 新增] 左侧栏「母骨骼导出」页：一个英雄 = 美术/角色/子骨骼 下的一个英雄文件夹（图在 images/阶段/ 下）；
          右键条目导出，调用工程里的 tools/SpineHeroExport/export_hero.py。操作说明见工程 ReadMarkDown/英雄Spine导出操作手册.md -->
     <DockPanel Margin="4">
-        <!-- 母骨骼与英雄目录（存在 heroes.json，换了点「全部导出」生效） -->
+        <!-- 男女母骨骼与男女英雄目录（存在 heroes.json，换了点「全部导出」生效）；英雄的体型决定用哪套母骨骼 -->
         <Grid DockPanel.Dock="Top" Margin="0 0 0 4" IsEnabled="{Binding IsIdle}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -20,17 +20,29 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
-            <TextBlock Text="母骨骼" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBlock Text="男母骨骼" VerticalAlignment="Center" Margin="0 0 6 0"/>
             <TextBox Grid.Column="1" Text="{Binding MasterPath, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"
                      ToolTip="{Binding MasterPath}"/>
             <Button Grid.Column="2" Content="更换..." Command="{Binding Cmd_ChangeMaster}" Margin="4 2 0 2"
-                    ToolTip="换成另一个母骨骼 .spine；换完点「全部导出」"/>
-            <TextBlock Grid.Row="1" Text="英雄目录" VerticalAlignment="Center" Margin="0 0 6 0"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding HeroRoot, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"
+                    ToolTip="男弟子（体型「男」）用的母骨骼 .spine；换完点「全部导出」"/>
+            <TextBlock Grid.Row="1" Text="女母骨骼" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding MasterFemalePath, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"
+                     ToolTip="{Binding MasterFemalePath}"/>
+            <Button Grid.Row="1" Grid.Column="2" Content="更换..." Command="{Binding Cmd_ChangeMasterFemale}" Margin="4 2 0 2"
+                    ToolTip="女弟子（体型「女」）用的母骨骼 .spine（定版女弟子）；换完点「全部导出」"/>
+            <TextBlock Grid.Row="2" Text="男子骨骼" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding HeroRoot, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"
                      ToolTip="{Binding HeroRoot}"/>
-            <Button Grid.Row="1" Grid.Column="2" Content="更换..." Command="{Binding Cmd_ChangeHeroRoot}" Margin="4 2 0 2"
-                    ToolTip="选「子骨骼」这一层（不是某个英雄的文件夹）：里面每个子文件夹是一个英雄"/>
+            <Button Grid.Row="2" Grid.Column="2" Content="更换..." Command="{Binding Cmd_ChangeHeroRoot}" Margin="4 2 0 2"
+                    ToolTip="选「子骨骼」这一层（不是某个英雄的文件夹）：里面每个子文件夹是一个男弟子"/>
+            <TextBlock Grid.Row="3" Text="女子骨骼" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding HeroRootFemale, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"
+                     ToolTip="{Binding HeroRootFemale}"/>
+            <Button Grid.Row="3" Grid.Column="2" Content="更换..." Command="{Binding Cmd_ChangeHeroRootFemale}" Margin="4 2 0 2"
+                    ToolTip="选「子骨骼_女」这一层：里面每个子文件夹是一个女弟子，扫进列表时体型自动标「女」"/>
         </Grid>
 
         <!-- 底部：全部导出；单个英雄的操作在右键菜单里 -->
@@ -75,6 +87,8 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="英雄号" Width="Auto" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}"/>
                     <DataGridTextColumn Header="名字" Width="Auto" Binding="{Binding Name}"/>
+                    <DataGridComboBoxColumn Header="体型" Width="Auto" ItemsSource="{x:Static vm:HeroExportViewModel.BodyOptions}"
+                                            SelectedItemBinding="{Binding Body, UpdateSourceTrigger=PropertyChanged}"/>
                     <DataGridTextColumn Header="表 id" Width="Auto" Binding="{Binding TableId, Mode=OneWay}" IsReadOnly="True"/>
                     <DataGridTextColumn Header="状态" Width="Auto" Binding="{Binding Status, Mode=OneWay}" IsReadOnly="True"/>
                     <DataGridTextColumn Header="英雄文件夹" Width="*" Binding="{Binding Source}" IsReadOnly="True"/>

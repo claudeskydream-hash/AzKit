@@ -1,0 +1,64 @@
+<Window x:Class="SpineViewer.Views.ServerOpenDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:ServerOpenViewModel}"
+        mc:Ignorable="d"
+        Title="开服设置（游戏上线时间）"
+        Background="{DynamicResource RegionBrush}"
+        Width="680"
+        Height="760"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- [AzureSail 新增] 开服设置：读 / 设游戏的上线时间（虚拟账号 9999992 的 serveronline_set），逻辑见 ServerOpenViewModel。
+         非模态，凭证与环境用云存档页 ① ② 的 -->
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Top" IsEnabled="{Binding IsIdle}">
+            <TextBlock TextWrapping="Wrap" Margin="0 0 0 6"
+                       Text="上线时间到之前所有区都显示「服务器未开启」；各区开服 = 上线时间 + ServerList 表的偏移小时。AzKit 设的优先于开发者登录写的。可以设将来的时刻（到点自动上线）。"/>
+            <DockPanel Margin="0 0 0 6">
+                <TextBlock Text="环境：" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding EnvText}" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button DockPanel.Dock="Right" Content="读取" Width="80" Command="{Binding Cmd_Load}"
+                        ToolTip="读当前环境的上线时间与各区开服记录。换环境在云存档页 ② 选，选完重新读"/>
+                <TextBlock/>
+            </DockPanel>
+            <DockPanel Margin="0 0 0 4">
+                <TextBlock Text="上线时间（北京时间）" VerticalAlignment="Center" Margin="0 0 6 0"/>
+                <Button DockPanel.Dock="Right" Content="填现在" Command="{Binding Cmd_FillNow}" Margin="4 0 0 0"/>
+                <TextBox Text="{Binding OnlineTimeText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" VerticalContentAlignment="Center"
+                         ToolTip="写成 2026-11-01 10:00（北京时间）"/>
+            </DockPanel>
+            <CheckBox Content="同时清空已写下的区开服记录（改上线时间时用：让各区按新上线时间重新算）" IsChecked="{Binding ClearRecords}" Margin="0 0 0 6"
+                      ToolTip="区开服记录写下就固定，不清的话已开的区还是按旧时间算（修仙年份等也按旧的）"/>
+            <UniformGrid Columns="2" Margin="0 0 0 6">
+                <Button Content="设上线时间" Command="{Binding Cmd_SetOnline}" Margin="0 0 2 0"/>
+                <Button Content="取消上线时间（改回未定）" Command="{Binding Cmd_UnsetOnline}" Foreground="Firebrick" Margin="2 0 0 0"/>
+            </UniformGrid>
+            <!-- 开发者名单：表格 -->
+            <DockPanel Margin="0 6 0 2">
+                <Button DockPanel.Dock="Right" Content="保存开发者" Command="{Binding Cmd_SaveDevelopers}" Margin="4 0 0 0"
+                        ToolTip="写当前环境的云端开发者名单（能写上线时间、能用 GM），和服务端硬编码的名单取并集；各局一分钟内生效。调试环境人人都算开发者"/>
+                <Button DockPanel.Dock="Right" Content="删除选中" Command="{Binding Cmd_RemoveDeveloper}" Foreground="Firebrick" Margin="4 0 0 0"/>
+                <Button DockPanel.Dock="Right" Content="添加" Command="{Binding Cmd_AddDeveloper}" Margin="4 0 0 0"/>
+                <TextBlock Text="开发者名单（改完点「保存开发者」才写进后台）" FontWeight="Bold" VerticalAlignment="Center"/>
+            </DockPanel>
+            <DataGrid ItemsSource="{Binding Developers}" SelectedItem="{Binding SelectedDeveloper}" Height="180"
+                      AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
+                      SelectionMode="Single" Margin="0 0 0 6">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="UserId" Width="160" Binding="{Binding UserIdText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="备注（这是谁）" Width="*" Binding="{Binding Note, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="游戏昵称（区服名册）" Width="*" Binding="{Binding Nickname}" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusText}" TextWrapping="Wrap" FontWeight="Bold" Margin="0 6 0 0"/>
+
+        <TextBox Text="{Binding Output, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"
+                 VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+    </DockPanel>
+</Window>

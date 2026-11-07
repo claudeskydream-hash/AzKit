@@ -80,7 +80,13 @@ namespace SpineViewer.Utils
         }
 
         /// <summary>把一行的值改成空字符串（= 删这一段存档）</summary>
-        public static Task ClearAsync(CloudAdminToken token, CloudSaveRow row) => PostAsync(token, "api/v1/table/row", new JsonObject
+        public static Task ClearAsync(CloudAdminToken token, CloudSaveRow row) => EditAsync(token, row, string.Empty);
+
+        /// <summary>
+        /// 改一行的值（只能改<b>已有</b>的行，后台按 row_id 定位；没有的 key 建不出来）。
+        /// 游戏存档的值是"JSON 序列化成的字符串"，这里传的就是那段 JSON 文本。
+        /// </summary>
+        public static Task EditAsync(CloudAdminToken token, CloudSaveRow row, string value) => PostAsync(token, "api/v1/table/row", new JsonObject
         {
             ["firm"] = Firm,
             ["table_id"] = TableId,
@@ -89,7 +95,7 @@ namespace SpineViewer.Utils
             ["payload"] = new JsonObject
             {
                 ["data_type"] = row.DataType,
-                ["value"] = string.Empty,
+                ["value"] = value,
             },
         });
 

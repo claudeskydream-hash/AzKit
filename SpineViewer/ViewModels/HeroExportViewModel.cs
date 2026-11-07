@@ -51,8 +51,11 @@ namespace SpineViewer.ViewModels
 
             public HeroRow(HeroExportViewModel owner) { _owner = owner; }
 
-            /// <summary>原始 JSON，保存时在它上面改，界面没管到的字段（extras、adjust）不丢</summary>
+            /// <summary>原始 JSON（打开窗口时读到的）。保存时优先用磁盘上同号的最新内容，它只在磁盘上没有时兜底</summary>
             public JsonObject Raw { get; init; } = [];
+
+            /// <summary>读配置时的英雄号（界面里改了号也认得出磁盘上是哪一项）；窗口里新加的为空</summary>
+            public string LoadedId { get; init; } = "";
 
             /// <summary>英雄号，同时是 res/spine/Hero 下的目录名与文件名</summary>
             public string Id { get => _id; set { if (SetProperty(ref _id, value)) OnPropertyChanged(nameof(Status)); } }
@@ -70,6 +73,19 @@ namespace SpineViewer.ViewModels
             private string _source = "";
 
             public bool IsSpineProject => Source.EndsWith(".spine", StringComparison.OrdinalIgnoreCase);
+
+            /// <summary>体型「男」/「女」（heroes.json 的 body：female = 女，不写 = 男），决定用哪套母骨骼导出</summary>
+            public string Body { get => _body; set { if (SetProperty(ref _body, value == BodyFemale ? BodyFemale : BodyMale)) _owner.SaveConfigOrWarn(); } }
+            private string _body = BodyMale;
+
+            public bool IsFemale => Body == BodyFemale;
+
+            /// <summary>读配置 / 扫目录时设体型（不触发保存）</summary>
+            public void LoadBody(bool female)
+            {
+                _body = female ? BodyFemale : BodyMale;
+                OnPropertyChanged(nameof(Body));
+            }
 
             /// <summary>图在不在、导没导出过、导出后图有没有改过</summary>
             public string Status
@@ -121,24 +137,51 @@ namespace SpineViewer.ViewModels
 
         public ObservableCollection<HeroRow> Heroes { get; } = [];
 
-        /// <summary>母骨骼 .spine（heroes.json 的 master，相对工程根目录）</summary>
-        public string MasterPath => _config?["master"]?.GetValue<string>() ?? "";
+        /// <summary>体型下拉的两项（界面显示用；存进 heroes.json 是 body = female / 不写）</summary>
+        public const string BodyMale = "男";
+        public const string BodyFemale = "女";
+        public static IReadOnlyList<string> BodyOptions { get; } = [BodyMale, BodyFemale];
 
-        /// <summary>英雄目录：里面每个子文件夹是一个英雄（heroes.json 的 heroRoot）</summary>
-        public string HeroRoot => _config?["heroRoot"]?.GetValue<string>() ?? "";
+        /// <summary>男弟子母骨骼 .spine（heroes.json 的 master，相对工程根目录）</summary>
+        public string MasterPath => ConfigString("master");
 
-        public RelayCommand Cmd_ChangeMaster => _cmd_ChangeMaster ??= new(() =>
-        {
-            if (!EnsureProjectRoot() || _config is null) return;
-            if (!DialogService.ShowOpenFileDialog(out var fileName, "选择母骨骼", "Spine 工程|*.spine")) return;
-            _config["master"] = ToConfigPath(fileName!);
-            if (!SaveConfigOrWarn()) return;
-            OnPropertyChanged(nameof(MasterPath));
-            AppendLog("母骨骼已换成 " + MasterPath + "。点「全部导出」让所有英雄用上新母骨骼（各英雄的 .spine 会同步，原文件备份进 _backup）");
-        });
+        /// <summary>女弟子母骨骼 .spine（heroes.json 的 masterFemale）</summary>
+        public string MasterFemalePath => ConfigString("masterFemale");
+
+        /// <summary>男弟子英雄目录：里面每个子文件夹是一个英雄（heroes.json 的 heroRoot）</summary>
+        public string HeroRoot => ConfigString("heroRoot");
+
+        /// <summary>女弟子英雄目录（heroes.json 的 heroRootFemale）：里面的英雄扫进列表时自动标成「女」</summary>
+        public string HeroRootFemale => ConfigString("heroRootFemale");
+
+        private string ConfigString(string key) => _config?[key]?.GetValue<string>() ?? "";
+
+        public RelayCommand Cmd_ChangeMaster => _cmd_ChangeMaster ??= new(() => ChangeMaster("master", "男弟子"));
         private RelayCommand? _cmd_ChangeMaster;
 
-        public RelayCommand Cmd_ChangeHeroRoot => _cmd_ChangeHeroRoot ??= new(() =>
+        public RelayCommand Cmd_ChangeMasterFemale => _cmd_ChangeMasterFemale ??= new(() => ChangeMaster("masterFemale", "女弟子"));
+        private RelayCommand? _cmd_ChangeMasterFemale;
+
+        public RelayCommand Cmd_ChangeHeroRoot => _cmd_ChangeHeroRoot ??= new(() => ChangeHeroRoot("heroRoot"));
+        private RelayCommand? _cmd_ChangeHeroRoot;
+
+        public RelayCommand Cmd_ChangeHeroRootFemale => _cmd_ChangeHeroRootFemale ??= new(() => ChangeHeroRoot("heroRootFemale"));
+        private RelayCommand? _cmd_ChangeHeroRootFemale;
+
+        /// <summary>换母骨骼（<paramref name="key"/> = master / masterFemale）</summary>
+        private void ChangeMaster(string key, string who)
+        {
+            if (!EnsureProjectRoot() || _config is null) return;
+            if (!DialogService.ShowOpenFileDialog(out var fileName, "选择" + who + "母骨骼", "Spine 工程|*.spine")) return;
+            _config[key] = ToConfigPath(fileName!);
+            if (!SaveConfigOrWarn()) return;
+            OnPropertyChanged(nameof(MasterPath));
+            OnPropertyChanged(nameof(MasterFemalePath));
+            AppendLog(who + "母骨骼已换成 " + ConfigString(key) + "。点「全部导出」让这些英雄用上新母骨骼（各英雄的 .spine 会同步，原文件备份进 _backup）");
+        }
+
+        /// <summary>换英雄目录（<paramref name="key"/> = heroRoot / heroRootFemale）</summary>
+        private void ChangeHeroRoot(string key)
         {
             if (!EnsureProjectRoot() || _config is null) return;
             if (!DialogService.ShowOpenFolderDialog(out var folder)) return;
@@ -153,12 +196,12 @@ namespace SpineViewer.ViewModels
                 AppendLog("选的「" + Path.GetFileName(root) + "」是一个英雄的文件夹（里面有 images），英雄目录改用它的上一层：" + parent);
                 root = parent;
             }
-            _config["heroRoot"] = ToConfigPath(root);
+            _config[key] = ToConfigPath(root);
             if (!SaveConfigOrWarn()) return;
             OnPropertyChanged(nameof(HeroRoot));
-            ScanHeroRoot();
-        });
-        private RelayCommand? _cmd_ChangeHeroRoot;
+            OnPropertyChanged(nameof(HeroRootFemale));
+            ScanHeroRoots();
+        }
 
         public HeroRow? SelectedHero { get => _selectedHero; set => SetProperty(ref _selectedHero, value); }
         private HeroRow? _selectedHero;
@@ -237,6 +280,7 @@ namespace SpineViewer.ViewModels
             if (SelectedHero is null) return;
             if (!MessagePopupService.OKCancel($"从列表里删掉 {SelectedHero.Id}（{SelectedHero.Name}）？\n不会删除已导出的文件，也不会改英雄表。"))
                 return;
+            if (!string.IsNullOrEmpty(SelectedHero.LoadedId)) _removedIds.Add(SelectedHero.LoadedId);
             Heroes.Remove(SelectedHero);
             SelectedHero = null;
             SaveConfigOrWarn();
@@ -413,9 +457,13 @@ namespace SpineViewer.ViewModels
 
         // ---------------------------------------------------------------- heroes.json
 
+        /// <summary>窗口里删掉的英雄号（保存时不从磁盘补回来）</summary>
+        private readonly HashSet<string> _removedIds = new(StringComparer.OrdinalIgnoreCase);
+
         private void LoadConfig()
         {
             Heroes.Clear();
+            _removedIds.Clear();
             _config = null;
             if (!File.Exists(ConfigPath)) return;
             try
@@ -429,10 +477,12 @@ namespace SpineViewer.ViewModels
                         Heroes.Add(new HeroRow(this)
                         {
                             Raw = h,
+                            LoadedId = id,
                             Id = id,
                             Name = h["name"]?.GetValue<string>() ?? "",
                             Source = h["images"]?.GetValue<string>() ?? h["spine"]?.GetValue<string>() ?? "",
                         });
+                        Heroes[^1].LoadBody(string.Equals(h["body"]?.GetValue<string>(), "female", StringComparison.OrdinalIgnoreCase));
                     }
                 }
             }
@@ -442,19 +492,28 @@ namespace SpineViewer.ViewModels
                 AppendLog("读取 heroes.json 失败：" + ex.Message);
                 return;
             }
-            ScanHeroRoot();
+            ScanHeroRoots();
             OnPropertyChanged(nameof(MasterPath));
+            OnPropertyChanged(nameof(MasterFemalePath));
             OnPropertyChanged(nameof(HeroRoot));
+            OnPropertyChanged(nameof(HeroRootFemale));
+        }
+
+        /// <summary>扫男女两个英雄目录（女弟子目录里新加的英雄自动标成「女」）</summary>
+        private void ScanHeroRoots()
+        {
+            ScanHeroRoot("heroRoot", false);
+            ScanHeroRoot("heroRootFemale", true);
         }
 
         /// <summary>
-        /// heroRoot（美术/角色/子骨骼）下每个子文件夹就是一个英雄：列表里还没有的自动加上、取下一个空着的英雄号。
-        /// 美术把文件夹放进去，打开窗口就在列表里了。图放在 images/&lt;阶段&gt;/ 下（子骨骼/李老道/images/LianQiQi/），
-        /// 旧的平铺摆法（图直接在英雄文件夹里）也认。
+        /// 英雄目录（heroRoot = 美术/角色/子骨骼，heroRootFemale = 美术/角色/子骨骼_女）下每个子文件夹就是一个英雄：
+        /// 列表里还没有的自动加上、取下一个空着的英雄号。美术把文件夹放进去，打开窗口就在列表里了。
+        /// 图放在 images/&lt;阶段&gt;/ 下（子骨骼/李老道/images/LianQiQi/），旧的平铺摆法（图直接在英雄文件夹里）也认。
         /// </summary>
-        private void ScanHeroRoot()
+        private void ScanHeroRoot(string key, bool female)
         {
-            var rootRel = _config?["heroRoot"]?.GetValue<string>();
+            var rootRel = _config?[key]?.GetValue<string>();
             var root = rootRel is null ? "" : ResolvePath(rootRel);
             if (!Directory.Exists(root)) return;
 
@@ -471,14 +530,15 @@ namespace SpineViewer.ViewModels
                     : Directory.EnumerateFiles(dir, "*.png").Any();
                 if (!hasImages) continue;
                 var row = new HeroRow(this) { Id = NextHeroId(), Name = Path.GetFileName(dir), Source = ToConfigPath(dir) };
+                row.LoadBody(female);
                 Heroes.Add(row);
                 added.Add(row.Id + "（" + row.Name + "）");
             }
             if (added.Count > 0 && SaveConfig(out _))
-                AppendLog("英雄目录里有新英雄，已加进列表：" + string.Join("、", added));
+                AppendLog((female ? "女弟子" : "") + "英雄目录里有新英雄，已加进列表：" + string.Join("、", added));
         }
 
-        private bool SaveConfigOrWarn()
+        internal bool SaveConfigOrWarn()
         {
             if (SaveConfig(out var error)) return true;
             MessagePopupService.Error(error!);
@@ -506,17 +566,52 @@ namespace SpineViewer.ViewModels
                 return false;
             }
 
+            // 先重读磁盘上的 heroes.json：窗口开着期间脚本可能改过它（to_spine 写 adjust / extras / hide、导出到表格写 tableId），
+            // 不能拿打开窗口时读到的旧内容整份写回 —— 2026-11-03 就这样冲掉过朱大勺重跑 to_spine 的结果，hide 回到旧值、两只手被藏掉。
+            // 界面只管：英雄号、名字、来源、体型，以及母骨骼 / 英雄目录四个路径；其余字段一律以磁盘为准。
+            var config = _config;
+            try
+            {
+                if (File.Exists(ConfigPath))
+                {
+                    config = JsonNode.Parse(File.ReadAllText(ConfigPath))!.AsObject();
+                    foreach (var key in new[] { "master", "masterFemale", "heroRoot", "heroRootFemale" })
+                        if (_config[key] is JsonNode v) config[key] = v.DeepClone();
+                }
+            }
+            catch (Exception ex)
+            {
+                error = "保存前重读 heroes.json 失败（没有保存）：" + ex.Message;
+                return false;
+            }
+            var diskHeroes = config["heroes"] as JsonObject;
+
             var heroes = new JsonObject();
+            var listed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var h in Heroes)
             {
-                var raw = (JsonObject)h.Raw.DeepClone();
+                var source = !string.IsNullOrEmpty(h.LoadedId) && diskHeroes?[h.LoadedId] is JsonObject disk ? disk : h.Raw;
+                var raw = (JsonObject)source.DeepClone();
                 raw["name"] = h.Name;
                 raw.Remove("images");
                 raw.Remove("spine");
                 raw[h.IsSpineProject ? "spine" : "images"] = h.Source;
+                if (h.IsFemale) raw["body"] = "female";
+                else raw.Remove("body");
                 heroes[h.Id.Trim()] = raw;
+                if (!string.IsNullOrEmpty(h.LoadedId)) listed.Add(h.LoadedId);
             }
-            _config["heroes"] = heroes;
+            // 窗口打开之后脚本新加的英雄（列表里还没有、也不是在窗口里删掉的）原样保留
+            if (diskHeroes is not null)
+            {
+                foreach (var (id, node) in diskHeroes)
+                {
+                    if (node is JsonObject && !listed.Contains(id) && !_removedIds.Contains(id) && heroes[id] is null)
+                        heroes[id] = node.DeepClone();
+                }
+            }
+            config["heroes"] = heroes;
+            _config = config;
 
             try
             {

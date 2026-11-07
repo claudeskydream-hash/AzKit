@@ -83,6 +83,24 @@ namespace SpineViewer.Services
             _onlineLog.Show();
         }
 
+        private static ServerOpenDialog? _serverOpen;
+
+        /// <summary>[AzureSail 新增] 开服设置窗口（非模态，同时只开一个）</summary>
+        public static void ShowServerOpen(SpineViewer.ViewModels.ServerOpenViewModel vm)
+        {
+            if (_serverOpen is not null)
+            {
+                if (_serverOpen.WindowState == WindowState.Minimized)
+                    _serverOpen.WindowState = WindowState.Normal;
+                _serverOpen.Activate();
+                return;
+            }
+
+            _serverOpen = new ServerOpenDialog { Owner = App.Current.MainWindow, DataContext = vm };
+            _serverOpen.Closed += (_, _) => _serverOpen = null;
+            _serverOpen.Show();
+        }
+
         public static bool ShowGeneratePreviewsDialog(AssetsPreviewViewModel vm) => ShowDialog<GeneratePreviewsDialog>(vm);
 
         public static bool ShowEditLocalAssetsRepoDialog(LocalAssetsRepoModel vm) => ShowDialog<EditLocalAssetsRepoDialog>(vm);

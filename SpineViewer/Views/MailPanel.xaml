@@ -1,0 +1,89 @@
+<UserControl x:Class="SpineViewer.Views.MailPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SpineViewer.ViewModels"
+             d:DataContext="{d:DesignInstance Type=vm:MailViewModel}"
+             mc:Ignorable="d">
+    <!-- [AzureSail 新增] 左侧栏「邮件」页：写一封发到游戏的邮件待发箱（虚拟账号 9999989 的 mail_outbox），逻辑见 MailViewModel。
+         待发箱列表、撤回、详情在右侧「邮件」页（MailOutboxPanel），选中本页时自动切过去。凭证与环境用「云存档」页 ① ② 的 -->
+    <DockPanel Margin="4">
+        <DockPanel DockPanel.Dock="Top" Margin="0 0 0 6" IsEnabled="{Binding IsIdle}">
+            <TextBlock Text="环境：" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding EnvText}" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button DockPanel.Dock="Right" Content="读取" Width="80" Command="{Binding Cmd_Load}"
+                    ToolTip="读当前环境的待发箱与工程的 ItemData 表。凭证与环境在「云存档」页 ① ② 设，换了环境要重新读"/>
+            <TextBlock/>
+        </DockPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusText}" TextWrapping="Wrap" FontWeight="Bold" Margin="0 6 0 0"/>
+
+        <UniformGrid DockPanel.Dock="Bottom" Columns="2" Margin="0 6 0 0" IsEnabled="{Binding IsIdle}">
+            <Button Content="发送" Command="{Binding Cmd_Send}" FontWeight="Bold" Margin="0 0 2 0"
+                    ToolTip="追加进待发箱：在线玩家一分钟内收到（服务端每 60 秒读一次），不在线的下次进区收到"/>
+            <Button Content="清空编辑区" Command="{Binding Cmd_ClearForm}" Margin="2 0 0 0"/>
+        </UniformGrid>
+
+        <DockPanel IsEnabled="{Binding IsIdle}">
+            <Grid DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="标题" VerticalAlignment="Center" Margin="0 0 6 4"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding MailTitle, UpdateSourceTrigger=PropertyChanged}" Margin="0 0 0 4"/>
+                <TextBlock Grid.Row="1" Text="正文" VerticalAlignment="Top" Margin="0 4 6 4"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding MailContent, UpdateSourceTrigger=PropertyChanged}" Height="110"
+                         AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" Margin="0 0 0 4"/>
+                <TextBlock Grid.Row="2" Text="发件人" VerticalAlignment="Center" Margin="0 0 6 4"/>
+                <DockPanel Grid.Row="2" Grid.Column="1" Margin="0 0 0 4">
+                    <TextBox DockPanel.Dock="Right" Text="{Binding ExpireDaysText, UpdateSourceTrigger=PropertyChanged}" Width="50"
+                             ToolTip="1～365 天，过期后玩家收件箱里自动删除（没领的附件也没了）"/>
+                    <TextBlock DockPanel.Dock="Right" Text="有效天数" VerticalAlignment="Center" Margin="8 0 6 0"/>
+                    <TextBox Text="{Binding Sender, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <TextBlock Grid.Row="3" Text="目标" VerticalAlignment="Center" Margin="0 0 6 4"/>
+                <DockPanel Grid.Row="3" Grid.Column="1" Margin="0 0 0 4">
+                    <ComboBox ItemsSource="{Binding TargetOptions}" SelectedIndex="{Binding TargetIndex}" Width="150"/>
+                    <TextBox Text="{Binding TargetIdsText, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding NeedTargetIds}" Margin="6 0 0 0"
+                             ToolTip="区号或 UserId，逗号 / 空格分隔"/>
+                </DockPanel>
+                <CheckBox Grid.Row="4" Grid.Column="1" Content="之后才建号的也收（不勾 = 补偿类，只给发信时已有的号）"
+                          IsChecked="{Binding IncludeNew}" IsEnabled="{Binding CanIncludeNew}" Margin="0 0 0 6"/>
+            </Grid>
+
+            <!-- 附件 -->
+            <DockPanel DockPanel.Dock="Top" Margin="0 4 0 2">
+                <Button DockPanel.Dock="Right" Content="删除选中" Command="{Binding Cmd_RemoveItem}" Foreground="Firebrick" Margin="4 0 0 0"/>
+                <Button DockPanel.Dock="Right" Content="手填一行" Command="{Binding Cmd_AddBlankItem}" Margin="4 0 0 0"/>
+                <TextBlock Text="附件（最多 10 种，同物品合并）" FontWeight="Bold" VerticalAlignment="Center"/>
+            </DockPanel>
+            <DataGrid DockPanel.Dock="Top" ItemsSource="{Binding Attachments}" SelectedItem="{Binding SelectedAttachment}" Height="150"
+                      AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
+                      SelectionMode="Single" Margin="0 0 0 6">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="物品 id" Width="90" Binding="{Binding ItemIdText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="数量" Width="80" Binding="{Binding CountText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="物品名（查表）" Width="*" Binding="{Binding ItemName}" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- 挑物品 -->
+            <DockPanel DockPanel.Dock="Top" Margin="0 0 0 2">
+                <Button DockPanel.Dock="Right" Content="加进附件" Command="{Binding Cmd_AddItem}" Margin="4 0 0 0"/>
+                <TextBlock Text="搜物品" VerticalAlignment="Center" Margin="0 0 6 0"/>
+                <TextBox Text="{Binding ItemSearch, UpdateSourceTrigger=PropertyChanged}" ToolTip="id 或名字的一部分（读取后可用）；双击结果直接加进附件"/>
+            </DockPanel>
+            <ListBox x:Name="_itemList" ItemsSource="{Binding ItemResults}" SelectedItem="{Binding SelectedItem}" DisplayMemberPath="Display"
+                     FontFamily="Consolas" MinHeight="120" MouseDoubleClick="ItemList_MouseDoubleClick"/>
+        </DockPanel>
+    </DockPanel>
+</UserControl>

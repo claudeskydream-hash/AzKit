@@ -293,6 +293,21 @@ namespace SpineViewer.ViewModels
         });
         private RelayCommand? _cmd_OpenOnlineLog;
 
+        /// <summary>开服设置窗口的视图模型（读 / 设游戏上线时间，见 ServerOpenViewModel）</summary>
+        public ServerOpenViewModel ServerOpen => _serverOpen ??= new(this);
+        private ServerOpenViewModel? _serverOpen;
+
+        /// <summary>打开开服设置窗口（凭证与环境用本页 ① ② 的）</summary>
+        public RelayCommand Cmd_OpenServerOpen => _cmd_OpenServerOpen ??= new(() => DialogService.ShowServerOpen(ServerOpen));
+        private RelayCommand? _cmd_OpenServerOpen;
+
+        /// <summary>AzureSail 工程根（英雄导出记下的；邮件窗口读物品表用）</summary>
+        public string AzureSailRoot => _vmMain.HeroExportViewModel.ProjectRoot;
+
+        /// <summary>左侧栏「邮件」页的视图模型（往游戏邮件待发箱发信，见 MailViewModel；共用这里的凭证与环境）</summary>
+        public MailViewModel Mail => _mail ??= new(this);
+        private MailViewModel? _mail;
+
         /// <summary>弹出历史记录窗口（请求记录）</summary>
         public RelayCommand Cmd_ShowCalls => _cmd_ShowCalls ??= new(() => DialogService.ShowCloudCallHistory(this));
         private RelayCommand? _cmd_ShowCalls;
